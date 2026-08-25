@@ -1,2 +1,3 @@
 # CN-pt
-xD
+Bên tự hoc jtreen dại học ấy
+
