@@ -6,6 +6,14 @@ const UserModel = {
     return rows[0] || null;
   },
 
+  async findAuthById(id) {
+    const [rows] = await pool.query(
+      'SELECT id, full_name, email, password_hash FROM users WHERE id = ?',
+      [id]
+    );
+    return rows[0] || null;
+  },
+
   async findById(id) {
     const [rows] = await pool.query(
       'SELECT id, full_name, email, phone, address, gender, date_of_birth, role FROM users WHERE id = ?',
@@ -19,6 +27,14 @@ const UserModel = {
       'UPDATE users SET full_name = ?, phone = ?, address = ?, gender = ?, date_of_birth = ? WHERE id = ?',
       [full_name, phone || null, address || null, gender || null, date_of_birth || null, id]
     );
+  },
+
+  async updatePassword(id, password_hash) {
+    const [result] = await pool.query(
+      'UPDATE users SET password_hash = ? WHERE id = ?',
+      [password_hash, id]
+    );
+    return result.affectedRows === 1;
   },
 
   async create({ full_name, email, password_hash, phone, address, role = 'user' }) {

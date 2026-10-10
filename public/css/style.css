@@ -53,6 +53,15 @@ body { font-family:'Roboto',sans-serif; }
 .profile-form input[readonly] { background:#f3f3f3; color:#777; }
 .profile-form .btn { margin:4px 0 0; }
 .profile-note { display:block; margin:-10px 0 16px; color:var(--muted); font-size:.72rem; }
+.profile-password { max-width:680px; margin-top:16px; }
+.profile-password > summary { width:max-content; list-style:none; cursor:pointer; }
+.profile-password > summary::-webkit-details-marker { display:none; }
+.profile-password[open] > summary { margin-bottom:16px; }
+.profile-password .profile-form { max-width:none; }
+.profile-password-input { position:relative; display:block; width:100%; }
+.profile-password-input input { padding-right:48px; }
+.profile-password-toggle { position:absolute; top:0; right:0; width:44px; height:42px; display:grid; place-items:center; border:0; background:transparent; color:#555; cursor:pointer; }
+.profile-password-toggle:hover { color:var(--orange); }
 .container { max-width:1232px; }
 .site-header { background:#b52c24; color:#fff; }
 .market-topline { background:#98231e; color:#fff; font-size:.75rem; }
