@@ -73,28 +73,34 @@ Mục tiêu của dự án là xây dựng một ứng dụng web có cấu trú
 
 ## 4. Các use case chính của hệ thống
 
+Trạng thái dưới đây phản ánh chức năng hiện có trong mã nguồn; chưa đồng nghĩa với việc mọi luồng đã được kiểm thử trên môi trường triển khai.
+
+- ✅ Đã triển khai
+- ⚠️ Đã triển khai một phần (phạm vi còn thiếu được ghi rõ)
+- ⬜ Chưa triển khai
+
 ### 4.1 Use case người dùng
 
-- Đăng ký tài khoản mới
-- Đăng nhập hệ thống
-- Xem danh sách sản phẩm và chi tiết sản phẩm
-- Tìm kiếm và lọc sản phẩm theo tiêu chí
-- Thêm sản phẩm vào giỏ hàng
-- Cập nhật số lượng và xóa sản phẩm trong giỏ hàng
-- Thanh toán và đặt hàng
-- Theo dõi trạng thái đơn hàng
-- Thêm sản phẩm vào wishlist
-- Viết đánh giá sản phẩm sau khi đơn hàng hoàn tất
+- ✅ Đăng ký tài khoản mới
+- ✅ Đăng nhập hệ thống
+- ✅ Xem danh sách sản phẩm và chi tiết sản phẩm
+- ✅ Tìm kiếm và lọc sản phẩm theo tiêu chí
+- ✅ Thêm sản phẩm vào giỏ hàng
+- ✅ Cập nhật số lượng và xóa sản phẩm trong giỏ hàng
+- ⚠️ Checkout và tạo đơn hàng đã có; chưa tích hợp cổng thanh toán trực tuyến.
+- ✅ Theo dõi trạng thái đơn hàng
+- ✅ Thêm và xóa sản phẩm trong wishlist
+- ✅ Viết hoặc cập nhật đánh giá sản phẩm sau khi đơn hàng hoàn tất
 
 ### 4.2 Use case quản trị viên
 
-- Đăng nhập với quyền admin
-- Quản lý danh mục sản phẩm
-- Thêm, sửa, xóa sản phẩm
-- Quản lý thông tin người dùng
-- Xem và xử lý đơn hàng
-- Cập nhật trạng thái đơn hàng
-- Theo dõi hoạt động và dữ liệu hệ thống
+- ✅ Đăng nhập với quyền admin
+- ✅ Quản lý danh mục sản phẩm
+- ✅ Thêm, sửa, xóa sản phẩm (không cho xóa sản phẩm đã có trong đơn hàng)
+- ⚠️ Quản lý tài khoản nhân viên đã có; admin chưa có chức năng quản lý tài khoản khách hàng.
+- ✅ Xem và xử lý đơn hàng
+- ✅ Cập nhật trạng thái đơn hàng theo các bước trạng thái hợp lệ
+- ⚠️ Dashboard có thống kê số sản phẩm, đơn hàng và tài khoản; chưa có nhật ký hoạt động/audit log.
 
 ---
 
@@ -239,5 +245,4 @@ ElectroShop là một dự án phát triển web có tính thực tiễn cao, ph
 - Nên dùng biến môi trường riêng cho môi trường production
 - Trước khi demo, kiểm tra lại kết nối database và trạng thái đơn hàng
 - Nếu database chưa được import schema, các chức năng chính sẽ không hoạt động đúng
-
 
