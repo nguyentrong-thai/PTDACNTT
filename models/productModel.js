@@ -4,7 +4,10 @@ const ProductModel = {
   async findAll({ search = '', category = '', brand = '', page = 1, limit = 12 } = {}) {
     const conditions = ['p.is_active = 1'];
     const values = [];
-    if (search) { conditions.push('(p.name LIKE ? OR p.brand LIKE ?)'); values.push(`%${search}%`, `%${search}%`); }
+    if (search) {
+      conditions.push('(p.name LIKE ? OR p.brand LIKE ? OR p.description LIKE ?)');
+      values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
     if (category) { conditions.push('c.slug = ?'); values.push(category); }
     if (brand) { conditions.push('p.brand = ?'); values.push(brand); }
      const [countRows] = await pool.query(

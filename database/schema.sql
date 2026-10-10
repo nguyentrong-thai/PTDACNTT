@@ -21,7 +21,9 @@ CREATE TABLE users (
   gender        ENUM('male', 'female', 'other') DEFAULT NULL,
   date_of_birth DATE DEFAULT NULL,
   role          ENUM('user', 'employee', 'admin') NOT NULL DEFAULT 'user',
-  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+  position      VARCHAR(100) DEFAULT NULL,
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE KEY uniq_users_phone (phone)
 ) ENGINE=InnoDB;
 
 -- ---------------------------------------------------------

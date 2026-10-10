@@ -6,7 +6,7 @@
 		<img src="<%= product.image_url || '/images/no-image.svg' %>" alt="<%= product.name %>">
 	</div>
 	<div class="detail-copy">
-		<p class="eyebrow"><%= product.brand %> / <%= product.category_name %></p>
+		<p class="eyebrow">Nhà sản xuất: <%= product.brand || 'Chưa cập nhật' %> / <%= product.category_name %></p>
 		<h1><%= product.name %></h1>
 		<p class="detail-price"><%= Number(product.price).toLocaleString('vi-VN') %> đ</p>
 		<p class="detail-description"><%= product.description || 'Sản phẩm chính hãng, được kiểm tra kỹ trước khi giao đến bạn.' %></p>

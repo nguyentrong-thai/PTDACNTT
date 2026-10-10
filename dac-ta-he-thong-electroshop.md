@@ -1,684 +1,320 @@
-# ĐẶC TẢ HỆ THỐNG — WEBSITE BÁN ĐỒ ĐIỆN TỬ (ELECTROSHOP)
+# Đặc tả hệ thống ElectroShop
 
-> Tài liệu được xây dựng dựa trên **khảo sát mã nguồn thực tế** tại repo
-> [`nguyentrong-thai/TTCSN`](https://github.com/nguyentrong-thai/TTCSN)
-> (Node.js + Express + EJS + MySQL), áp dụng **cách phân tích và trình bày use case**
-> tham khảo từ báo cáo mẫu của Nhóm 16 (đề tài cùng chủ đề "Xây dựng website bán đồ điện tử").
-> Cấu trúc gồm: (1) Khảo sát & yêu cầu, (2) Biểu đồ/danh sách use case, (3) Đặc tả chi tiết
-> từng use case, (4) Luồng hoạt động (activity flow) của các nghiệp vụ chính.
+> **Phạm vi tài liệu:** mô tả hành vi của mã nguồn ElectroShop hiện tại (Node.js, Express, EJS, MySQL/MariaDB). Chức năng có trong tài liệu là hành vi thiết kế/triển khai trong repository; cần hoàn thành kiểm thử trên môi trường đích trước khi xem là nghiệm thu production.
 
----
+## 1. Mục tiêu và phạm vi
 
-## 1. KHẢO SÁT HỆ THỐNG
+ElectroShop hỗ trợ khách duyệt và mua sản phẩm điện tử, theo dõi đơn hàng; nhân viên vận hành sản phẩm/đơn hàng; quản trị viên quản lý toàn bộ khu vực quản trị.
 
-> Tài liệu này được cập nhật theo mã nguồn thực tế đang có trong repo. Mục tiêu là phản ánh đúng
-> các chức năng đã triển khai, thay vì mô tả một hệ thống lý tưởng chưa được xây dựng.
+### 1.1. Trong phạm vi
 
-### 2.1.2. Tài liệu đặc tả người dùng
+- Tài khoản, đăng ký, đăng nhập, đăng xuất, cập nhật hồ sơ và đổi mật khẩu.
+- Danh mục và sản phẩm; tìm kiếm, lọc, chi tiết, upload ảnh.
+- Giỏ hàng, mua ngay, checkout, tạo và theo dõi đơn, hủy đơn/hoàn kho.
+- Đánh giá sản phẩm, danh sách yêu thích, trợ lý gợi ý.
+- Phân quyền `user`, `employee`, `admin`.
 
-#### a) Khảo sát chi tiết
+### 1.2. Ngoài phạm vi hiện tại
 
-##### Các hoạt động của hệ thống
+- Thanh toán trực tuyến, hoàn tiền qua cổng thanh toán.
+- Gửi email/SMS tự động.
+- Quản lý vận chuyển bên thứ ba, kế toán, báo cáo doanh thu nâng cao.
+- Thu hồi đồng loạt những session đang tồn tại sau khi mật khẩu bị đổi.
 
-- Quản lý sản phẩm:
-  - Admin cần đăng nhập vào hệ thống.
-  - Tìm kiếm sản phẩm theo tên, giá, số lượng tồn. Với những sản phẩm cần thay đổi thông tin, admin click vào biểu tượng sửa để cập nhật thông tin như tên, mô tả, số lượng, giá, và các thuộc tính cần thiết.
-  - Mỗi khi có hàng mới nhập về, admin có thể tạo mới sản phẩm để hiển thị lên trang web cho khách hàng xem và mua.
+## 2. Tác nhân và phân quyền
 
-- Quản lý tài khoản:
-  - Admin cần đăng nhập vào hệ thống.
-  - Admin có thể sửa thông tin tài khoản nhân viên hoặc xóa tài khoản.
-  - Admin có thể tạo mới tài khoản, thay đổi quyền nhân viên bằng cách chọn vai trò `role` cho nhân viên.
-
-- Quản lý đơn hàng:
-  - Admin cần đăng nhập vào hệ thống.
-  - Admin có thể tìm kiếm theo thông tin hóa đơn, cập nhật trạng thái hóa đơn; trạng thái mặc định khi khách hàng đặt hàng là `chờ duyệt`.
-  - Admin có thể xem chi tiết hóa đơn, bao gồm thông tin khách hàng, sản phẩm đặt mua và thông tin hóa đơn.
-  - Admin cũng có thể xóa hóa đơn.
-  - Admin có thể tìm kiếm, sửa thông tin và tạo mới thông tin.
-
-- Đăng nhập:
-  - Để đăng nhập, người dùng cần có tài khoản của trang web. Khi truy cập vào trang web, người dùng click vào nút “Đăng nhập”; nếu truy cập vào trang không thuộc quyền, hệ thống sẽ hiển thị màn hình đăng nhập và yêu cầu người dùng đăng nhập.
-  - Người dùng nhập thông tin và click “Đăng nhập”. Hệ thống sẽ hiển thị màn hình trang chủ theo quyền truy cập của tài khoản.
-
-- Đăng ký:
-  - Người dùng có thể tự tạo tài khoản cho mình để truy cập website với quyền là `user`.
-  - Click vào nút “Đăng ký” để hệ thống hiển thị màn hình tạo tài khoản; sau khi điền đầy đủ thông tin, người dùng click nút “Đăng ký” để xác nhận.
-
-- Xem cửa hàng:
-  - Khách hàng truy cập vào đường link trang web của cửa hàng. Hệ thống hiển thị trang chủ của cửa hàng ra màn hình.
-
-- Tìm kiếm sản phẩm:
-  - Khách hàng có thể tìm kiếm sản phẩm bằng cách truy cập vào trang web; danh mục sản phẩm sẽ được hiển thị. Ở trang chủ hiển thị một số sản phẩm giới thiệu hoặc các sản phẩm bán chạy.
-  - Khách hàng cũng có thể truy cập trực tiếp vào danh mục sản phẩm để xem nhiều sản phẩm hơn, tìm kiếm theo tên, giá sản phẩm.
-  - Khi đã chọn được sản phẩm ưng ý, khách hàng có thể click vào sản phẩm để xem chi tiết.
-
-- Chỉnh sửa thông tin cá nhân:
-  - Khách hàng click vào “Tài khoản của tôi” trong danh sách vừa xuất hiện. Hệ thống hiển thị form thông tin tài khoản của khách hàng lên màn hình.
-  - Chỉnh sửa thông tin đăng ký tài khoản: khách hàng nhập email, mật khẩu, xác nhận mật khẩu và ấn “Lưu”. Hệ thống cập nhật thông tin đăng ký tài khoản và hiển thị thông báo đã cập nhật.
-  - Chỉnh sửa thông tin liên hệ: khách hàng nhập họ và tên, số điện thoại, tên hồ sơ và ấn “Lưu”. Hệ thống sửa thông tin liên hệ và hiển thị thông báo đã cập nhật.
-  - Chỉnh sửa địa chỉ giao hàng/thanh toán: khách hàng nhập họ và tên, điện thoại, địa chỉ, tỉnh/thành, quận/huyện, phường/xã và ấn “Lưu”. Hệ thống cập nhật địa chỉ và hiển thị thông báo đã cập nhật.
-
-- Xem sản phẩm:
-  - Khách hàng kích vào một danh mục bất kỳ trong danh sách các danh mục. Hệ thống sẽ lấy thông tin các sản phẩm lên màn hình.
-  - Khách hàng kích vào ảnh minh họa của một sản phẩm bất kỳ trong danh sách. Hệ thống hiển thị thông tin chi tiết của sản phẩm được chọn.
-
-- Quản lý giỏ hàng:
-  - Khách hàng cần đăng nhập vào hệ thống.
-  - Sau khi chọn sản phẩm, khách hàng chọn số lượng và click vào “Thêm giỏ hàng”. Sản phẩm sẽ được thêm vào giỏ hàng của khách hàng.
-  - Trong giỏ hàng, hệ thống hiển thị danh mục sản phẩm khách hàng đã đặt mua; khách hàng có thể thay đổi số lượng hoặc xóa sản phẩm khỏi giỏ hàng. Hệ thống tự động tính tổng tiền tương ứng.
-
-- Mua hàng:
-  - Khách hàng cần đăng nhập vào hệ thống.
-  - Sau khi đã có một số lượng sản phẩm trong giỏ hàng, khách hàng có thể đặt hàng bằng cách click vào nút thanh toán; hệ thống tự động cập nhật hóa đơn mới vào danh mục hóa đơn của admin quản lý. Mọi thông tin sản phẩm trong giỏ hàng sẽ được xóa khỏi giỏ hàng sau khi đặt hàng thành công.
-
-- Xem đơn hàng:
-  - Khách hàng chọn “Đơn hàng” trong danh mục. Hệ thống lấy thông tin các đơn hàng của khách hàng và hiển thị lên màn hình.
-
-- Hủy đơn hàng:
-  - Sau khi đã đặt hàng, khách hàng click vào nút hủy; hệ thống hiển thị xác nhận hủy đơn hàng. Khi xác nhận, hệ thống sẽ xóa toàn bộ thông tin đơn hàng đã đặt.
-
-#### b) Yêu cầu chức năng
-
-- Khách hàng có thể vào xem, tìm kiếm, đăng nhập, đăng ký, chỉnh sửa thông tin cá nhân, quản lý giỏ hàng, mua hàng, xem đơn hàng và hủy đơn hàng.
-- Người quản trị có thể đăng nhập, quản lý sản phẩm của cửa hàng, quản lý tài khoản nhân viên, quản lý danh mục, quản lý đơn hàng và quản lý một số thông tin trang web.
-
-#### c) Yêu cầu phi chức năng
-
-- Giao diện dễ nhìn, dễ hiểu, thao tác nhanh gọn; bất cứ ai vào mua hàng cũng có thể thực hiện được.
-- Ổn định, xử lý nhanh. Tốc độ tải trang hay thực hiện công việc không được quá lâu; cần có các trạng thái rõ ràng khi thực hiện xong một công việc nào đó.
-- Tương thích với các trình duyệt và các thiết bị khác nhau.
-- An toàn và bảo mật: đảm bảo an toàn thông tin cho người dùng; các thao tác nghiệp vụ của người quản trị thực hiện được khi có quyền.
-
-### 1.1. Khảo sát sơ bộ — Tổ chức và tác nhân (actor)
-
-Hệ thống đang triển khai 3 nhóm người dùng chính, tương ứng với cột `role` trong bảng `users`
-(`user`, `employee`, `admin`) và với logic kiểm tra quyền trong middleware:
-
-- **Khách (Guest / chưa đăng nhập):** duyệt trang chủ, xem danh sách và chi tiết sản phẩm, tìm
-  kiếm/lọc sản phẩm, dùng trợ lý gợi ý, đăng ký, đăng nhập, xem trang hỗ trợ. Khách cũng có thể
-  thêm sản phẩm vào giỏ hàng, nhưng khi thanh toán bắt buộc phải đăng nhập.
-- **Khách hàng (role = `user`):** có toàn bộ quyền của Khách, cộng thêm: chỉnh sửa thông tin cá
-  nhân, quản lý giỏ hàng, mua ngay, đặt hàng, xem đơn hàng, hủy đơn khi còn ở trạng thái
-  `pending`, đánh giá sản phẩm sau khi đã mua và nhận hàng thành công, quản lý wishlist.
-- **Quản trị viên (role = `admin`):** truy cập vào khu vực `/admin`; quản lý sản phẩm, danh mục,
-  đơn hàng, tài khoản nhân viên; xem thống kê tổng quan.
-
-> **Ghi chú khảo sát quan trọng:** Vai trò `employee` đã tồn tại trong CSDL và có màn hình
-> tạo/sửa/xóa tài khoản nhân viên, nhưng middleware hiện tại chỉ kiểm tra `role === 'admin'`.
-> Vì vậy, trong thực tế, `employee` chưa có khu vực chức năng riêng và chưa được cấp quyền nghiệp vụ
-> khác ngoài việc được quản trị viên quản lý như một tài khoản hệ thống.
-
-### 1.2. Yêu cầu chức năng thực tế của hệ thống
-
-**Đối với Khách / Khách hàng:**
-1. Xem trang chủ và danh sách sản phẩm theo danh mục.
-2. Tìm kiếm sản phẩm theo tên/thương hiệu, lọc theo danh mục và hãng.
-3. Xem chi tiết sản phẩm: mô tả, giá, tồn kho, đánh giá trung bình, danh sách đánh giá.
-4. Đăng ký tài khoản khách hàng mới.
-5. Đăng nhập / đăng xuất.
-6. Chỉnh sửa thông tin cá nhân (họ tên, số điện thoại, địa chỉ, giới tính, ngày sinh).
-7. Thêm, cập nhật số lượng và xóa sản phẩm khỏi giỏ hàng.
-8. Mua ngay một sản phẩm (không cần thêm vào giỏ hàng chung).
-9. Đặt hàng: nhập thông tin người nhận và xác nhận đơn hàng; hệ thống tạo đơn và trừ tồn kho.
-10. Xem danh sách và chi tiết các đơn hàng đã đặt.
-11. Hủy đơn hàng khi đơn còn ở trạng thái `pending`.
-12. Đánh giá sản phẩm sau khi đã mua và nhận hàng thành công.
-13. Quản lý danh sách yêu thích thêm/xóa sản phẩm.
-14. Trò chuyện với trợ lý gợi ý sản phẩm bằng từ khóa hoặc ngân sách.
-
-**Đối với Quản trị viên:**
-15. Đăng nhập vào khu vực quản trị và xem thống kê tổng quan.
-16. Thêm/sửa/ẩn sản phẩm; ẩn sản phẩm bằng cách cập nhật `is_active = 0` thay vì xóa vật lý.
-17. Tải ảnh lên cho sản phẩm, tự resize và chuyển định dạng WebP bằng `sharp`.
-18. Thêm/sửa/xóa danh mục sản phẩm.
-19. Xem danh sách, chi tiết và cập nhật trạng thái đơn hàng theo luồng hợp lệ.
-20. Thêm/sửa/xóa tài khoản nhân viên.
-
-### 1.3. Yêu cầu phi chức năng thực tế
-
-- **Bảo mật:** mật khẩu được băm bằng `bcrypt`; form có CSRF (`csurf`); giới hạn tần suất đăng
-  nhập/đăng ký bằng `express-rate-limit` (20 request/15 phút); bảo vệ header với `helmet`.
-- **Tải lên file:** dung lượng body giới hạn 100kb, dung lượng ảnh tối đa 5MB, chỉ chấp nhận
-  `.jpg/.jpeg/.png/.webp`.
-- **Toàn vẹn dữ liệu:** các thao tác liên quan đến tồn kho và đơn hàng (đặt hàng, hủy đơn, cập nhật
-  trạng thái) thực hiện trong transaction MySQL và có cơ chế khóa dòng khi cần.
-- **Hiệu năng:** phân trang cho danh sách sản phẩm, đơn hàng, nhân viên; chỉ có vài index quan trọng
-  trên các trường truy vấn chính.
-- **Ràng buộc dữ liệu:** email và các dữ liệu khóa riêng có tính duy nhất; mỗi khách hàng chỉ lưu
-  được một đánh giá cho mỗi sản phẩm; mỗi sản phẩm chỉ xuất hiện một lần trong giỏ hoặc wishlist của
-  cùng một khách hàng.
-- **Hạn chế hiện tại của hệ thống:** chưa tích hợp thanh toán trực tuyến; giỏ hàng được lưu trong
-  session nên sẽ mất khi hết phiên / vừa đóng trình duyệt; vai trò `employee` chưa có khu vực chức
-  năng riêng; hệ thống hiện chưa có module nhân viên vận hành riêng ngoài admin.
-
----
----
-
-## 2. PHÂN TÍCH USE CASE
-
-### 2.1. Actor
-
-| Actor | Vai trò trong hệ thống |
+| Tác nhân | Quyền chính |
 |---|---|
-| Khách (Guest) | Người dùng chưa đăng nhập, duyệt và tìm hiểu sản phẩm |
-| Khách hàng (Customer, `role=user`) | Đã đăng nhập, thực hiện các nghiệp vụ mua sắm |
-| Quản trị viên (Admin, `role=admin`) | Quản lý toàn bộ sản phẩm, danh mục, đơn hàng, nhân viên |
+| Khách (`Guest`) | Xem trang chủ, danh sách/chi tiết sản phẩm, tìm kiếm/lọc, dùng trợ lý gợi ý, đăng ký, đăng nhập, xem hỗ trợ; có thể bắt đầu luồng mua ngay trước khi đăng nhập. |
+| Khách hàng (`user`) | Quyền Guest; quản lý hồ sơ và mật khẩu, giỏ hàng, checkout, xem danh sách/chi tiết đơn của mình, hủy đơn `pending`, đánh giá sản phẩm đủ điều kiện, quản lý wishlist. |
+| Nhân viên (`employee`) | Đăng nhập; vào `/admin`, xem thống kê chung, quản lý sản phẩm và đơn hàng. Không được quản lý nhân viên hoặc danh mục. |
+| Quản trị viên (`admin`) | Toàn bộ quyền nhân viên; thêm/sửa/xóa nhân viên và quản lý danh mục. |
 
-### 2.2. Danh sách use case theo actor
+Middleware `requireLogin`, `requireStaff` và `requireAdmin` kiểm tra session/role. Ẩn menu chỉ là hỗ trợ giao diện; quyền truy cập phải được kiểm tra ở route.
 
-- **Khách hàng (Customer):**
-  Xem trang chủ/cửa hàng · Tìm kiếm & lọc sản phẩm · Xem chi tiết sản phẩm · Đăng ký · Đăng nhập ·
-  Đăng xuất · Chỉnh sửa thông tin cá nhân · Quản lý giỏ hàng · Mua ngay · Đặt hàng (thanh toán) ·
-  Xem đơn hàng · Hủy đơn hàng · Đánh giá sản phẩm · Quản lý danh sách yêu thích · Tư vấn sản phẩm
-  bằng trợ lý ảo.
-- **Quản trị viên (Admin):**
-  Đăng nhập quản trị (dùng chung use case Đăng nhập) · Xem thống kê tổng quan · Quản lý sản phẩm ·
-  Quản lý danh mục · Quản lý đơn hàng · Quản lý tài khoản nhân viên.
+## 3. Quy tắc nghiệp vụ
 
-### 2.3. Biểu đồ use case (mô tả dạng sơ đồ)
+1. Email tài khoản là duy nhất; số điện thoại có unique index nếu migration tương ứng đã áp dụng.
+2. Mật khẩu được lưu dưới dạng bcrypt hash trong `users.password_hash`, không lưu plaintext.
+3. Mật khẩu đăng ký và mật khẩu nhân viên tạo mới tối thiểu 8 ký tự; mật khẩu đổi tại trang hồ sơ tối thiểu 6 ký tự theo xử lý hiện tại.
+4. Giá trong `order_items.unit_price` là giá tại thời điểm đặt hàng; thay đổi giá sản phẩm không làm đổi giá trị đơn cũ.
+5. Khi checkout, hệ thống kiểm tra tồn kho trong transaction, tạo đơn/chi tiết và trừ kho nguyên tử.
+6. Khách chỉ xem đơn có `orders.user_id` bằng ID trong session và chỉ tự hủy đơn `pending`.
+7. Hủy đơn từ giao diện quản trị chỉ áp dụng với đơn `pending` hoặc `confirmed`. Hủy đơn hoàn lại từng số lượng từ `order_items` và đổi trạng thái trong transaction.
+8. Luồng trạng thái quản trị: `pending → confirmed` hoặc `cancelled`; `confirmed → shipping` hoặc `cancelled`; `shipping → completed`; `completed` và `cancelled` là trạng thái cuối. Route từ chối chuyển trạng thái ngoài luồng này.
+9. Chỉ khách đã có đơn `completed` chứa sản phẩm mới được đánh giá. Mỗi khách có tối đa một bản ghi đánh giá cho mỗi sản phẩm; đánh giá mới cập nhật bản cũ.
+10. Wishlist và giỏ hàng thường được liên kết với tài khoản; mỗi sản phẩm xuất hiện tối đa một lần trong wishlist/giỏ hàng của cùng người dùng.
+11. Sản phẩm đã được tham chiếu từ `order_items` không thể xóa vật lý; sản phẩm có thể được ngừng hiển thị bằng `is_active`.
 
-```mermaid
-flowchart LR
-    Guest([Khách])
-    Customer([Khách hàng])
-    Admin([Quản trị viên])
+## 4. Danh sách chức năng và route chính
 
-    Guest --> UC1[Xem cửa hàng]
-    Guest --> UC2[Tìm kiếm sản phẩm]
-    Guest --> UC3[Xem sản phẩm]
-    Guest --> UC4[Đăng ký]
-    Guest --> UC5[Đăng nhập]
+| Nhóm | Route tiêu biểu | Quyền |
+|---|---|---|
+| Trang chủ | `GET /` | Công khai |
+| Tài khoản | `GET/POST /auth/register`, `GET/POST /auth/login`, `POST /auth/logout` | Công khai |
+| Cửa hàng | `GET /products`, `GET /products/:id` | Công khai |
+| Đánh giá | `POST /products/:id/reviews` | Đã đăng nhập và phải thỏa điều kiện đơn hoàn tất |
+| Giỏ hàng/mua ngay | `GET /cart`, `POST /cart/add`, `POST /cart/update/:id`, `POST /cart/remove/:id` | Đăng nhập cho giỏ; mua ngay có thể bắt đầu khi chưa đăng nhập |
+| Checkout/đơn khách hàng | `GET /orders/checkout`, `POST /orders`, `GET /orders`, `GET /orders/:id`, `POST /orders/:id/cancel` | Khách hàng |
+| Hồ sơ/mật khẩu | `GET/POST /profile`, `POST /profile/password` | Đăng nhập |
+| Wishlist | `GET /wishlist`, `POST /wishlist/:productId/add`, `POST /wishlist/:productId/remove` | Đăng nhập |
+| Trợ lý | `POST /assistant` | Công khai; trả JSON |
+| Quản trị | `/admin/products`, `/admin/orders` | Employee và admin |
+| Quản lý nhân viên/danh mục | `/admin/users`, `/admin/categories` | Chỉ admin |
 
-    Customer --> UC5
-    Customer --> UC6[Đăng xuất]
-    Customer --> UC7[Chỉnh sửa thông tin cá nhân]
-    Customer --> UC8[Quản lý giỏ hàng]
-    Customer --> UC9[Mua ngay]
-    Customer --> UC10[Đặt hàng / Thanh toán]
-    Customer --> UC11[Xem đơn hàng]
-    Customer --> UC12[Hủy đơn hàng]
-    Customer --> UC13[Đánh giá sản phẩm]
-    Customer --> UC14[Quản lý yêu thích]
-    Customer --> UC15[Trợ lý gợi ý sản phẩm]
+Các route tương thích ngược trong `routes/adminRoutes.js` chuyển tiếp tới màn hình quản trị tương ứng.
 
-    Admin --> UC5
-    Admin --> UC16[Xem thống kê]
-    Admin --> UC17[Quản lý sản phẩm]
-    Admin --> UC18[Quản lý danh mục]
-    Admin --> UC19[Quản lý đơn hàng]
-    Admin --> UC20[Quản lý tài khoản nhân viên]
-```
+## 5. Mô hình dữ liệu
 
----
+### 5.1. Bảng chính
 
-## 3. ĐẶC TẢ CHI TIẾT USE CASE
+| Bảng | Vai trò và dữ liệu quan trọng |
+|---|---|
+| `users` | Tài khoản; `full_name`, `email`, `password_hash`, thông tin liên hệ, `role` (`user`, `employee`, `admin`), `position`. |
+| `categories` | Danh mục; `name`, `slug` duy nhất, `description`. |
+| `products` | Sản phẩm; `category_id`, `name`, `brand`, `description`, `price`, `stock_qty`, `image_url`, `is_active`. |
+| `cart_items` | Sản phẩm/số lượng trong giỏ theo `user_id`; cặp `(user_id, product_id)` duy nhất. |
+| `orders` | Chủ đơn, người nhận, tổng tiền, trạng thái, địa chỉ, số điện thoại, ghi chú, thời gian tạo. |
+| `order_items` | Sản phẩm, số lượng, `unit_price` tại thời điểm đặt hàng, liên kết tới đơn. |
+| `reviews` | Người đánh giá, sản phẩm, điểm 1–5, bình luận; cặp user/sản phẩm duy nhất. |
+| `wishlist_items` | Sản phẩm yêu thích theo tài khoản; cặp user/sản phẩm duy nhất. |
 
-> Mẫu đặc tả áp dụng theo cách trình bày của Nhóm 16: **Tên use case → Actor → Mô tả vắn tắt →
-> Luồng sự kiện (Luồng cơ bản / Luồng rẽ nhánh) → Yêu cầu đặc biệt → Tiền điều kiện → Hậu điều
-> kiện → Điểm mở rộng**. Nội dung từng bước được đối chiếu trực tiếp với code (`routes/`,
-> `controllers/`, `models/`) để đảm bảo khớp với hành vi thật của hệ thống.
+### 5.2. Liên kết và toàn vẹn
 
-### 3.1. Use case: Xem cửa hàng (trang chủ)
+- `products.category_id` tham chiếu `categories.id`; không xóa danh mục còn sản phẩm phụ thuộc.
+- `orders.user_id` tham chiếu tài khoản; `order_items.order_id` tham chiếu đơn.
+- `order_items.product_id` không cascade delete để bảo toàn chi tiết lịch sử mua.
+- Các bảng tài khoản, giỏ hàng, wishlist và đánh giá dùng khóa ngoại theo định nghĩa trong `database/schema.sql`.
+- Schema cài mới và migration cho database hiện hữu là hai cách khởi tạo khác nhau; cần kiểm tra migration đã áp dụng trước khi chạy lại.
 
-- **Actor:** Khách, Khách hàng
-- **Mô tả vắn tắt:** Cho phép người dùng xem danh mục sản phẩm và các sản phẩm mới nhất ngay khi truy cập trang chủ.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi người dùng truy cập đường dẫn gốc (`/`).
-  2. Hệ thống truy vấn bảng `categories` (toàn bộ, sắp xếp theo tên) và bảng `products`
-     (8 sản phẩm đang hoạt động `is_active = 1`, mới nhất trước).
-  3. Hệ thống hiển thị trang chủ gồm danh mục và danh sách sản phẩm nổi bật. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Nếu không kết nối được cơ sở dữ liệu, hệ thống chuyển sang trang lỗi (middleware xử lý lỗi chung).
-- **Yêu cầu đặc biệt:** Không có.
-- **Tiền điều kiện:** Không có.
-- **Hậu điều kiện:** Không có.
-- **Điểm mở rộng:** Khách hàng có thể chuyển sang use case Tìm kiếm sản phẩm hoặc Xem chi tiết sản phẩm.
+## 6. Đặc tả use case
 
-### 3.2. Use case: Tìm kiếm & lọc sản phẩm
+### UC-01 — Duyệt cửa hàng và tìm sản phẩm
 
-- **Actor:** Khách, Khách hàng
-- **Mô tả vắn tắt:** Cho phép tìm sản phẩm theo từ khóa tên/thương hiệu, kết hợp lọc theo danh mục và hãng, có phân trang (12 sản phẩm/trang).
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi người dùng truy cập `/products` kèm tham số `search`, `category`, `brand`, `page` (tùy chọn).
-  2. Hệ thống dựng câu truy vấn động: lọc `is_active = 1`, thêm điều kiện `name/brand LIKE %search%`
-     nếu có từ khóa, `category.slug = category` và `brand = brand` nếu được chọn.
-  3. Hệ thống trả về danh sách sản phẩm khớp điều kiện, cùng danh sách danh mục và thương hiệu để hiển thị bộ lọc, và thông tin phân trang. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Nếu không có sản phẩm nào khớp điều kiện, hệ thống hiển thị danh sách rỗng cùng bộ lọc (không có thông báo lỗi riêng).
-  2. Nếu số trang yêu cầu vượt quá tổng số trang, hệ thống tự động giới hạn về trang hợp lệ cuối cùng.
-- **Yêu cầu đặc biệt:** Không có.
-- **Tiền điều kiện:** Không có.
-- **Hậu điều kiện:** Không có.
-- **Điểm mở rộng:** Người dùng có thể chuyển sang use case Xem chi tiết sản phẩm.
+- **Tác nhân:** Guest, Customer.
+- **Tiền điều kiện:** Không.
+- **Luồng chính:** Người dùng mở `/` hoặc `/products`; hệ thống hiển thị danh mục/sản phẩm đang hoạt động. Trang sản phẩm hỗ trợ từ khóa tên/thương hiệu, bộ lọc danh mục/thương hiệu và phân trang 12 sản phẩm/trang. Mở `/products/:id` để xem thông tin sản phẩm, đánh giá, điểm trung bình và lựa chọn giỏ hàng/mua ngay.
+- **Ngoại lệ:** Sản phẩm không tồn tại hoặc không còn hoạt động thì trả trang 404; không có kết quả tìm kiếm thì hiển thị danh sách rỗng.
+- **Hậu điều kiện:** Không thay đổi dữ liệu.
 
-### 3.3. Use case: Xem chi tiết sản phẩm
+### UC-02 — Đăng ký tài khoản
 
-- **Actor:** Khách, Khách hàng
-- **Mô tả vắn tắt:** Hiển thị thông tin chi tiết một sản phẩm, kèm điểm đánh giá trung bình, danh sách đánh giá, và trạng thái sản phẩm đã có trong danh sách yêu thích hay chưa (nếu đã đăng nhập).
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi người dùng truy cập `/products/:id`.
-  2. Hệ thống truy vấn thông tin sản phẩm từ bảng `products` (join `categories`), danh sách đánh
-     giá từ bảng `reviews` (join `users`), điểm trung bình và số lượng đánh giá.
-  3. Nếu người dùng đã đăng nhập, hệ thống kiểm tra thêm: đánh giá hiện tại của người dùng cho sản
-     phẩm này (nếu có), người dùng đã từng mua và nhận sản phẩm thành công hay chưa (điều kiện để
-     được đánh giá), sản phẩm đã có trong danh sách yêu thích hay chưa.
-  4. Hệ thống hiển thị trang chi tiết sản phẩm. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Nếu không tìm thấy sản phẩm (hoặc sản phẩm đã bị ẩn `is_active = 0`), hệ thống hiển thị trang lỗi 404.
-- **Yêu cầu đặc biệt:** Không có.
-- **Tiền điều kiện:** Không có.
-- **Hậu điều kiện:** Không có.
-- **Điểm mở rộng:** Khách hàng có thể Quản lý giỏ hàng (thêm vào giỏ), Mua ngay, Đánh giá sản phẩm, hoặc Quản lý yêu thích ngay từ trang này.
+- **Tác nhân:** Guest.
+- **Tiền điều kiện:** Chưa đăng nhập.
+- **Luồng chính:** Nhập họ tên, email, số điện thoại, mật khẩu, xác nhận và địa chỉ tùy chọn; hệ thống kiểm tra định dạng, độ dài, mật khẩu tối thiểu 8 ký tự, mật khẩu khớp và thông tin duy nhất; bcrypt hash mật khẩu, tạo tài khoản `role=user`, thông báo thành công và chuyển tới đăng nhập.
+- **Ngoại lệ:** Thiếu/sai dữ liệu, email/số điện thoại trùng hoặc mật khẩu không khớp thì không tạo tài khoản và trả flash lỗi.
+- **Hậu điều kiện:** Có bản ghi người dùng mới; DB chỉ lưu hash.
 
-### 3.4. Use case: Đăng ký
+### UC-03 — Đăng nhập và đăng xuất
 
-- **Actor:** Khách
-- **Mô tả vắn tắt:** Cho phép người dùng tạo tài khoản khách hàng mới (`role = user`).
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi khách truy cập `/auth/register` và nhấn "Đăng ký".
-  2. Hệ thống hiển thị form yêu cầu: họ tên, email, mật khẩu, xác nhận mật khẩu, số điện thoại, địa chỉ.
-  3. Người dùng nhập thông tin và gửi form.
-  4. Hệ thống kiểm tra: đã nhập đủ họ tên/email/mật khẩu; mật khẩu khớp với xác nhận mật khẩu;
-     mật khẩu có ít nhất 6 ký tự; email chưa tồn tại trong bảng `users`.
-  5. Hệ thống băm mật khẩu bằng `bcrypt` và thêm bản ghi mới vào bảng `users` với `role = 'user'`.
-  6. Hệ thống thông báo đăng ký thành công và chuyển hướng sang trang đăng nhập. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Tại bước 4, nếu thiếu thông tin bắt buộc, hệ thống thông báo lỗi và yêu cầu nhập lại.
-  2. Tại bước 4, nếu mật khẩu và xác nhận mật khẩu không khớp, hệ thống thông báo lỗi tương ứng.
-  3. Tại bước 4, nếu mật khẩu ngắn hơn 6 ký tự, hệ thống thông báo lỗi tương ứng.
-  4. Tại bước 4, nếu email đã tồn tại, hệ thống thông báo "Email này đã được đăng ký".
-- **Yêu cầu đặc biệt:** Email phải duy nhất trong bảng `users`; mật khẩu không được lưu ở dạng văn bản thường (chỉ lưu `password_hash`).
-- **Tiền điều kiện:** Không có.
-- **Hậu điều kiện:** Nếu thành công, hệ thống thêm một bản ghi mới vào bảng `users`.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Tài khoản thuộc một trong ba role.
+- **Tiền điều kiện đăng nhập:** Có tài khoản.
+- **Luồng chính:** Nhập email/mật khẩu; hệ thống truy vấn user và dùng `bcrypt.compare` với `password_hash`. Nếu khớp, lưu `id`, `full_name`, `email`, `role` vào session. Lựa chọn “ghi nhớ đăng nhập” đặt thời hạn cookie dài hơn. Admin được chuyển tới `/admin`; employee và user được chuyển tới trang chủ, từ đó employee có thể vào khu vực quản trị.
+- **Ngoại lệ:** Email không tồn tại hoặc mật khẩu sai thì trả cùng thông báo chung; route xác thực chịu rate limit.
+- **Đăng xuất:** `POST /auth/logout` hủy session và chuyển về trang chủ. Giỏ hàng trong database không bị xóa.
 
-### 3.5. Use case: Đăng nhập
+### UC-04 — Cập nhật hồ sơ
 
-- **Actor:** Khách hàng, Quản trị viên
-- **Mô tả vắn tắt:** Cho phép người dùng đã có tài khoản đăng nhập; hệ thống dùng chung một form cho cả khách hàng và quản trị viên, chỉ khác nơi chuyển hướng sau khi đăng nhập.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi người dùng truy cập `/auth/login` và nhập email, mật khẩu (tùy chọn "Ghi nhớ đăng nhập").
-  2. Hệ thống tìm tài khoản theo email trong bảng `users` và so khớp mật khẩu đã băm bằng `bcrypt`.
-  3. Nếu hợp lệ, hệ thống lưu thông tin tối thiểu (id, họ tên, email, role) vào session; nếu chọn
-     "Ghi nhớ đăng nhập", thời hạn phiên là 30 ngày, ngược lại là 1 ngày.
-  4. Hệ thống điều hướng:
-     a. Nếu người dùng vừa bị chuyển tới trang đăng nhập từ luồng "Mua ngay" chưa đăng nhập, quay lại trang thanh toán.
-     b. Nếu `role = admin`, chuyển tới `/admin`.
-     c. Ngược lại, chuyển tới trang chủ.
-     Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Tại bước 2, nếu không tìm thấy email hoặc mật khẩu không khớp, hệ thống hiển thị thông báo "Email hoặc mật khẩu không đúng" (không phân biệt rõ lỗi nào để tránh dò tài khoản).
-- **Yêu cầu đặc biệt:** Đăng nhập bị giới hạn tần suất tối đa 20 lần/15 phút trên mỗi client để chống dò mật khẩu.
-- **Tiền điều kiện:** Người dùng đã có tài khoản hợp lệ.
-- **Hậu điều kiện:** Nếu thành công, hệ thống lưu phiên đăng nhập (`req.session.user`).
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Tài khoản đã đăng nhập.
+- **Luồng chính:** Mở `/profile`, cập nhật họ tên, email, số điện thoại, giới tính, ngày sinh hoặc địa chỉ; hệ thống kiểm tra dữ liệu và tính duy nhất của email/số điện thoại, cập nhật bản ghi `users` và đồng bộ tên/email vào session.
+- **Ngoại lệ:** Dữ liệu không hợp lệ hoặc trùng tài khoản khác thì dữ liệu không được cập nhật và có flash lỗi.
+- **Ghi chú:** Form hồ sơ không chứa trường mật khẩu hiện tại; đổi mật khẩu là use case riêng.
 
-### 3.6. Use case: Đăng xuất
+### UC-05 — Đổi mật khẩu
 
-- **Actor:** Khách hàng, Quản trị viên
-- **Mô tả vắn tắt:** Kết thúc phiên đăng nhập hiện tại.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi người dùng nhấn "Đăng xuất".
-  2. Hệ thống hủy toàn bộ session và chuyển hướng về trang chủ. Use case kết thúc.
-- **Luồng rẽ nhánh:** Không có.
-- **Yêu cầu đặc biệt:** Không có.
-- **Tiền điều kiện:** Người dùng đang đăng nhập.
-- **Hậu điều kiện:** Phiên đăng nhập (và giỏ hàng lưu trong session) bị xóa.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Tài khoản đã đăng nhập.
+- **Tiền điều kiện:** Đã mở form “Đổi mật khẩu” tại `/profile`.
+- **Luồng chính:**
+  1. Nhập mật khẩu hiện tại, mật khẩu mới và xác nhận mật khẩu mới.
+  2. Client và server yêu cầu đủ trường; server yêu cầu mật khẩu mới tối thiểu 6 ký tự và hai trường mật khẩu mới trùng nhau.
+  3. Hệ thống lấy `password_hash` hiện tại theo ID tài khoản và xác minh mật khẩu hiện tại bằng bcrypt.
+  4. Hệ thống bcrypt hash mật khẩu mới và cập nhật `users.password_hash`.
+  5. Hệ thống đọc lại hash từ database và xác minh hash mới bằng mật khẩu vừa nhập.
+  6. Khi cập nhật/đối chiếu thành công, hiển thị flash thành công và chuyển về `/profile`.
+- **Ngoại lệ:** Thiếu trường, mật khẩu mới ngắn/không khớp, mật khẩu hiện tại sai hoặc không tìm thấy tài khoản thì không báo đổi thành công. Lỗi DB được chuyển tới middleware xử lý lỗi.
+- **Hậu điều kiện:** Lần đăng nhập mới dùng mật khẩu mới; mật khẩu cũ không khớp hash trong DB. Session hiện tại vẫn tiếp tục hoạt động; hệ thống chưa có cơ chế thu hồi mọi session khác.
 
-### 3.7. Use case: Chỉnh sửa thông tin cá nhân
+### UC-06 — Quản lý giỏ hàng
 
-- **Actor:** Khách hàng
-- **Mô tả vắn tắt:** Cho phép khách hàng cập nhật họ tên, số điện thoại, địa chỉ, giới tính, ngày sinh.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi khách hàng truy cập `/profile`. Hệ thống hiển thị thông tin hiện tại lấy từ bảng `users`.
-  2. Khách hàng chỉnh sửa các trường và nhấn "Lưu".
-  3. Hệ thống kiểm tra hợp lệ (họ tên bắt buộc, tối đa 100 ký tự; số điện thoại/địa chỉ trong giới hạn độ dài; giới tính thuộc {male, female, other}; ngày sinh đúng định dạng `YYYY-MM-DD`).
-  4. Hệ thống cập nhật bảng `users` và cập nhật lại họ tên trong session. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Tại bước 3, nếu dữ liệu không hợp lệ, hệ thống thông báo lỗi và giữ nguyên dữ liệu cũ.
-- **Yêu cầu đặc biệt:** Không cho phép đổi email từ màn hình này (không có trường email trong form cập nhật).
-- **Tiền điều kiện:** Khách hàng đã đăng nhập.
-- **Hậu điều kiện:** Nếu thành công, bản ghi tương ứng trong bảng `users` được cập nhật.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Customer.
+- **Tiền điều kiện:** Đăng nhập.
+- **Luồng chính:** Thêm sản phẩm, cập nhật số lượng hoặc xóa dòng trong giỏ; server kiểm tra sản phẩm và tồn kho; giỏ thường được lưu trong `cart_items` theo tài khoản. Tổng tiền tính từ giá hiện tại và số lượng.
+- **Ngoại lệ:** Sản phẩm hết hàng/không còn khả dụng hoặc số lượng không hợp lệ thì từ chối cập nhật và thông báo phù hợp.
+- **Hậu điều kiện:** `cart_items` của tài khoản được cập nhật.
 
-### 3.8. Use case: Quản lý giỏ hàng
+### UC-07 — Mua ngay
 
-- **Actor:** Khách, Khách hàng
-- **Mô tả vắn tắt:** Cho phép thêm sản phẩm vào giỏ, cập nhật số lượng, hoặc xóa sản phẩm khỏi giỏ. Giỏ hàng được lưu trong session (không lưu vào CSDL), nên dùng được cả khi chưa đăng nhập.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi người dùng nhấn "Thêm vào giỏ" tại trang danh sách hoặc chi tiết sản phẩm.
-  2. Hệ thống kiểm tra sản phẩm tồn tại và còn hàng (`stock_qty >= 1`).
-  3. Hệ thống giới hạn số lượng thêm vào trong khoảng [1, tồn kho hiện có]; nếu sản phẩm đã có trong giỏ, cộng dồn số lượng (không vượt tồn kho).
-  4. Hệ thống lưu vào `req.session.cart` và hiển thị trang giỏ hàng với tổng tiền được tính lại. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Nếu sản phẩm hết hàng, hệ thống thông báo "Sản phẩm hiện đã hết hàng" và không thêm vào giỏ.
-  2. Khi người dùng cập nhật số lượng tại trang giỏ hàng, nếu tồn kho hiện tại của sản phẩm bằng 0, hệ thống tự động loại sản phẩm đó khỏi giỏ.
-  3. Khi người dùng xóa sản phẩm khỏi giỏ, hệ thống loại bỏ dòng tương ứng khỏi `session.cart`.
-- **Yêu cầu đặc biệt:** Giỏ hàng không tồn tại lâu dài — mất khi hết phiên đăng nhập/trình duyệt (không dùng bảng `cart_items` dù CSDL có định nghĩa).
-- **Tiền điều kiện:** Không có.
-- **Hậu điều kiện:** Nếu thành công, nội dung `session.cart` được cập nhật.
-- **Điểm mở rộng:** Khách hàng có thể chuyển sang use case Đặt hàng/Thanh toán.
+- **Tác nhân:** Guest, Customer.
+- **Luồng chính:** Chọn số lượng và nhấn mua ngay; mặt hàng được lưu trong `session.buyNow`, tách biệt giỏ thường. Customer được chuyển thẳng tới checkout; Guest được yêu cầu đăng nhập rồi quay lại checkout.
+- **Ngoại lệ:** Sản phẩm không tồn tại/hết hàng hoặc số lượng không hợp lệ thì không tạo luồng mua ngay.
+- **Hậu điều kiện:** Có dữ liệu mua ngay tạm trong session cho lần checkout.
 
-### 3.9. Use case: Mua ngay
+### UC-08 — Checkout và tạo đơn
 
-- **Actor:** Khách, Khách hàng
-- **Mô tả vắn tắt:** Cho phép mua một sản phẩm ngay lập tức mà không cần thêm vào giỏ hàng chung.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi người dùng chọn số lượng và nhấn "Mua ngay" tại trang sản phẩm.
-  2. Hệ thống lưu sản phẩm và số lượng vào `session.buyNow` (tách biệt với giỏ hàng thường).
-  3. Nếu người dùng đã đăng nhập, hệ thống chuyển thẳng tới trang thanh toán (`/orders/checkout`).
-     Nếu chưa đăng nhập, hệ thống lưu lại đường dẫn cần quay về (`returnTo`) và chuyển tới trang đăng nhập. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Nếu sản phẩm hết hàng, hệ thống từ chối và thông báo lỗi (giống use case Quản lý giỏ hàng).
-  2. Người dùng có thể hủy luồng mua ngay tại trang thanh toán để quay lại giỏ hàng thường.
-- **Yêu cầu đặc biệt:** Không có.
-- **Tiền điều kiện:** Không có.
-- **Hậu điều kiện:** Nếu thành công, `session.buyNow` được thiết lập.
-- **Điểm mở rộng:** Kết nối trực tiếp với use case Đặt hàng/Thanh toán.
+- **Tác nhân:** Customer.
+- **Tiền điều kiện:** Đăng nhập; giỏ thường hoặc `buyNow` có ít nhất một sản phẩm.
+- **Luồng chính:**
+  1. Mở `/orders/checkout`; hệ thống nạp mua ngay nếu có, nếu không thì lấy giỏ theo tài khoản.
+  2. Nhập người nhận, địa chỉ giao hàng, số điện thoại và ghi chú tùy chọn.
+  3. Server kiểm tra dữ liệu; bắt đầu transaction.
+  4. Khóa từng dòng sản phẩm bằng `FOR UPDATE`; kiểm tra sản phẩm hoạt động và đủ tồn.
+  5. Tạo `orders`, ghi từng `order_items` với giá hiện tại, trừ tồn kho.
+  6. Xóa giỏ đã đặt hoặc dữ liệu mua ngay, commit và thông báo mã đơn.
+- **Ngoại lệ:** Giỏ trống, thông tin không hợp lệ hoặc thiếu tồn kho thì rollback/không tạo đơn và trả thông báo phù hợp.
+- **Hậu điều kiện:** Có đơn và chi tiết đơn; tồn kho giảm tương ứng; dữ liệu giỏ liên quan được dọn sau thành công.
+- **Thanh toán:** Chức năng hiện tại ghi nhận đơn hàng nội bộ, chưa thu tiền qua cổng trực tuyến.
 
-### 3.10. Use case: Đặt hàng (Thanh toán)
+### UC-09 — Xem danh sách và chi tiết đơn
 
-- **Actor:** Khách hàng
-- **Mô tả vắn tắt:** Cho phép khách hàng xác nhận thông tin nhận hàng và tạo đơn hàng từ giỏ hàng hoặc từ sản phẩm "mua ngay".
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi khách hàng truy cập `/orders/checkout`. Hệ thống lấy danh sách sản phẩm
-     cần thanh toán (ưu tiên `session.buyNow` nếu có, ngược lại lấy `session.cart`) và tính tổng tiền.
-  2. Khách hàng nhập tên người nhận, địa chỉ giao hàng, số điện thoại, ghi chú (tùy chọn) và xác nhận đặt hàng.
-  3. Hệ thống kiểm tra dữ liệu đầu vào hợp lệ (bắt buộc và giới hạn độ dài từng trường).
-  4. Hệ thống mở transaction: với từng sản phẩm, khóa dòng (`FOR UPDATE`) và kiểm tra còn đủ tồn
-     kho; nếu đủ, cộng dồn vào tổng tiền đơn hàng.
-  5. Hệ thống thêm bản ghi vào bảng `orders` (trạng thái mặc định `pending`) và các dòng chi tiết
-     vào `order_items`, đồng thời trừ tồn kho tương ứng trong `products`.
-  6. Hệ thống commit transaction, xóa giỏ hàng (hoặc `buyNow`) khỏi session, thông báo đặt hàng
-     thành công kèm mã đơn. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Tại bước 1, nếu giỏ hàng rỗng, hệ thống thông báo "Giỏ hàng đang trống" và chuyển về trang giỏ hàng.
-  2. Tại bước 3, nếu thiếu/invalid thông tin người nhận, hệ thống thông báo lỗi và giữ nguyên trang thanh toán.
-  3. Tại bước 4, nếu một sản phẩm không đủ tồn kho, hệ thống hủy toàn bộ transaction (rollback) và
-     thông báo "Không thể tạo đơn hàng. Vui lòng kiểm tra lại giỏ hàng và thông tin giao hàng."
-- **Yêu cầu đặc biệt:** Toàn bộ thao tác trừ kho + tạo đơn phải nguyên tử (transaction + khóa dòng) để tránh bán vượt tồn kho khi có nhiều đơn đồng thời.
-- **Tiền điều kiện:** Khách hàng đã đăng nhập; giỏ hàng (hoặc mua ngay) không rỗng.
-- **Hậu điều kiện:** Nếu thành công, hệ thống thêm bản ghi mới vào `orders`/`order_items`, giảm `stock_qty` tương ứng trong `products`.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Customer.
+- **Tiền điều kiện:** Đăng nhập.
+- **Luồng chính:** `GET /orders` lấy đơn theo `user_id`, hỗ trợ lọc trạng thái và phân trang 10 đơn/trang. `GET /orders/:id` truy vấn với cả ID đơn và ID người dùng session, hiển thị mã đơn, trạng thái, người nhận, địa chỉ, điện thoại, ghi chú, sản phẩm, số lượng, đơn giá, thành tiền và tổng tiền.
+- **Ngoại lệ:** Đơn không tồn tại hoặc không thuộc tài khoản hiện tại trả 404.
+- **Hậu điều kiện:** Không thay đổi dữ liệu.
 
-### 3.11. Use case: Xem đơn hàng
+### UC-10 — Khách hủy đơn
 
-- **Actor:** Khách hàng
-- **Mô tả vắn tắt:** Cho phép khách hàng xem lại các đơn hàng đã đặt (có phân trang).
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi khách hàng truy cập `/orders`.
-  2. Hệ thống truy vấn bảng `orders` theo `user_id`, sắp xếp mới nhất trước, phân trang 10 đơn/trang.
-  3. Hệ thống hiển thị danh sách đơn hàng kèm trạng thái. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Nếu khách hàng chưa có đơn hàng nào, hệ thống hiển thị danh sách rỗng.
-- **Yêu cầu đặc biệt:** Không có.
-- **Tiền điều kiện:** Khách hàng đã đăng nhập.
-- **Hậu điều kiện:** Không có.
-- **Điểm mở rộng:** Khách hàng có thể chuyển sang use case Hủy đơn hàng.
+- **Tác nhân:** Customer là chủ đơn.
+- **Tiền điều kiện:** Đơn có trạng thái `pending`.
+- **Luồng chính:** Hệ thống bắt đầu transaction, khóa đơn thỏa `id`, `user_id` và `status=pending`; hoàn kho từng sản phẩm từ `order_items`; cập nhật trạng thái `cancelled`; commit.
+- **Ngoại lệ:** Đơn không tồn tại, không thuộc khách hoặc không còn pending thì không thay đổi đơn/kho và hiển thị thông báo chung.
+- **Hậu điều kiện:** Đơn bị hủy và kho được hoàn nếu thao tác hợp lệ.
 
-### 3.12. Use case: Hủy đơn hàng
+### UC-11 — Đánh giá sản phẩm
 
-- **Actor:** Khách hàng
-- **Mô tả vắn tắt:** Cho phép khách hàng tự hủy đơn hàng của mình khi đơn còn ở trạng thái chờ xử lý.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi khách hàng nhấn "Hủy đơn hàng" trên một đơn có trạng thái `pending`.
-  2. Hệ thống mở transaction, khóa dòng đơn hàng và kiểm tra đơn thuộc về khách hàng hiện tại và đang ở trạng thái `pending`.
-  3. Hệ thống hoàn lại số lượng tồn kho cho từng sản phẩm trong đơn (`order_items`) và cập nhật trạng thái đơn thành `cancelled`.
-  4. Hệ thống commit transaction và thông báo thành công. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Tại bước 2, nếu đơn không tồn tại, không thuộc về khách hàng, hoặc không còn ở trạng thái `pending` (đã được duyệt/đang giao/đã xong), hệ thống bỏ qua thao tác hủy nhưng vẫn hiển thị thông báo chung "Đã hủy đơn hàng nếu đơn chưa được xác nhận."
-- **Yêu cầu đặc biệt:** Chỉ hủy được khi đơn ở trạng thái `pending`.
-- **Tiền điều kiện:** Khách hàng đã đăng nhập và là chủ đơn hàng.
-- **Hậu điều kiện:** Nếu thành công, trạng thái đơn chuyển thành `cancelled` và tồn kho các sản phẩm liên quan được hoàn lại.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Customer.
+- **Tiền điều kiện:** Đăng nhập và có đơn `completed` chứa sản phẩm.
+- **Luồng chính:** Gửi điểm 1–5 và bình luận tối đa 2.000 ký tự; hệ thống kiểm tra quyền mua và lưu đánh giá. Đánh giá mới cho cùng sản phẩm cập nhật bản ghi hiện tại.
+- **Ngoại lệ:** Điểm/bình luận sai hoặc chưa mua và nhận hàng thành công thì từ chối.
+- **Hậu điều kiện:** Bảng `reviews` được thêm/cập nhật.
 
-### 3.13. Use case: Đánh giá sản phẩm
+### UC-12 — Wishlist
 
-- **Actor:** Khách hàng
-- **Mô tả vắn tắt:** Cho phép khách hàng đã mua và nhận sản phẩm thành công để lại đánh giá (1–5 sao kèm bình luận).
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi khách hàng chọn số sao và nhập bình luận tại trang chi tiết sản phẩm.
-  2. Hệ thống kiểm tra khách hàng có ít nhất một đơn hàng trạng thái `completed` chứa sản phẩm này.
-  3. Hệ thống lưu đánh giá vào bảng `reviews`; nếu khách hàng đã từng đánh giá sản phẩm này trước
-     đó, ghi đè bằng đánh giá mới (mỗi khách chỉ giữ một đánh giá/sản phẩm).
-  4. Hệ thống thông báo thành công và hiển thị lại trang chi tiết sản phẩm. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Tại bước 1, nếu số sao không thuộc [1,5] hoặc bình luận vượt quá 2.000 ký tự, hệ thống thông báo lỗi.
-  2. Tại bước 2, nếu khách hàng chưa từng mua và nhận sản phẩm này, hệ thống từ chối và thông báo "Chỉ khách đã mua và nhận sản phẩm mới có thể đánh giá."
-- **Yêu cầu đặc biệt:** Mỗi khách hàng chỉ có một đánh giá cho mỗi sản phẩm (ràng buộc `UNIQUE (user_id, product_id)`).
-- **Tiền điều kiện:** Khách hàng đã đăng nhập và đã có đơn hàng hoàn tất (`completed`) chứa sản phẩm.
-- **Hậu điều kiện:** Nếu thành công, bảng `reviews` được thêm/cập nhật một bản ghi.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Customer.
+- **Tiền điều kiện:** Đăng nhập.
+- **Luồng chính:** Thêm sản phẩm đang hoạt động vào `wishlist_items`, xem danh sách hoặc xóa một sản phẩm. Thêm lặp không tạo dòng trùng.
+- **Hậu điều kiện:** Danh sách yêu thích của tài khoản được cập nhật.
 
-### 3.14. Use case: Quản lý danh sách yêu thích
+### UC-13 — Trợ lý gợi ý sản phẩm
 
-- **Actor:** Khách hàng
-- **Mô tả vắn tắt:** Cho phép khách hàng lưu sản phẩm quan tâm để xem lại sau.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi khách hàng nhấn "Thêm vào yêu thích" tại trang sản phẩm.
-  2. Hệ thống kiểm tra sản phẩm tồn tại và đang hoạt động, sau đó thêm bản ghi vào bảng `wishlist_items` (bỏ qua nếu đã tồn tại, nhờ `INSERT IGNORE`).
-  3. Hệ thống quay lại trang trước đó và hiển thị thông báo thành công. Use case kết thúc.
-  4. Khách hàng có thể vào `/wishlist` để xem toàn bộ danh sách hoặc xóa từng sản phẩm khỏi danh sách.
-- **Luồng rẽ nhánh:**
-  1. Nếu sản phẩm không tồn tại/đã bị ẩn, hệ thống thông báo "Không tìm thấy sản phẩm để lưu."
-- **Yêu cầu đặc biệt:** Một sản phẩm chỉ xuất hiện một lần trong danh sách yêu thích của mỗi khách hàng.
-- **Tiền điều kiện:** Khách hàng đã đăng nhập.
-- **Hậu điều kiện:** Nếu thành công, bảng `wishlist_items` được thêm/xóa một bản ghi tương ứng.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Guest, Customer.
+- **Luồng chính:** Gửi yêu cầu tối đa 200 ký tự tới `POST /assistant`; hệ thống chuẩn hóa tiếng Việt, nhận diện một số danh mục/từ khóa/ngân sách, lọc hàng đang hoạt động và còn tồn, trả tối đa ba kết quả dưới dạng JSON.
+- **Ngoại lệ:** Nội dung rỗng hoặc không có sản phẩm phù hợp thì trả phản hồi tương ứng.
+- **Giới hạn:** Đây là logic tìm kiếm/gợi ý theo catalog, không phải mô hình AI hội thoại.
 
-### 3.15. Use case: Trợ lý gợi ý sản phẩm
+### UC-14 — Quản lý sản phẩm
 
-- **Actor:** Khách, Khách hàng
-- **Mô tả vắn tắt:** Cho phép người dùng nhập yêu cầu bằng ngôn ngữ tự nhiên (ví dụ: "tai nghe dưới 15 triệu") để hệ thống gợi ý tối đa 3 sản phẩm phù hợp.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi người dùng gửi tin nhắn tới `/assistant`.
-  2. Hệ thống chuẩn hóa văn bản (bỏ dấu tiếng Việt), trích ngân sách nếu người dùng có nêu (ví dụ "dưới 15 triệu"), và xác định danh mục nếu người dùng có nhắc tới từ khóa liên quan (điện thoại, laptop, phụ kiện, đồng hồ thông minh).
-  3. Hệ thống lấy tối đa 100 sản phẩm đang hoạt động và còn hàng, lọc theo ngân sách (nếu có), tính điểm phù hợp theo số từ khóa khớp cộng điểm thưởng nếu đúng danh mục.
-  4. Hệ thống trả về tối đa 3 sản phẩm điểm cao nhất (ưu tiên giá thấp hơn khi đồng điểm) kèm câu trả lời gợi ý. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Nếu người dùng không nhập nội dung, hệ thống trả lời "Bạn muốn tìm sản phẩm nào?" và không có sản phẩm gợi ý.
-  2. Nếu không có sản phẩm nào khớp, hệ thống trả lời không tìm thấy sản phẩm phù hợp.
-- **Yêu cầu đặc biệt:** Nội dung tin nhắn bị giới hạn tối đa 200 ký tự.
-- **Tiền điều kiện:** Không có.
-- **Hậu điều kiện:** Không có.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Employee, Admin.
+- **Luồng chính:** Xem danh sách phân trang; thêm/sửa sản phẩm với danh mục, tên, thương hiệu, mô tả, giá, tồn kho và ảnh. Ảnh tải lên giới hạn 5 MB, chỉ nhận JPG/JPEG/PNG/WebP theo kiểm tra định dạng, được xoay/resize tối đa trong khung 1600×1600 và chuyển sang WebP.
+- **Ngoại lệ:** Dữ liệu không hợp lệ hoặc upload không được chấp nhận thì không lưu thay đổi tương ứng; sản phẩm đã tham chiếu đơn hàng không bị xóa vật lý.
+- **Quyền:** Employee/admin; quản lý danh mục là quyền admin.
 
-### 3.16. Use case: Xem thống kê tổng quan (Admin)
+### UC-15 — Quản lý đơn hàng nhân viên/quản trị viên
 
-- **Actor:** Quản trị viên
-- **Mô tả vắn tắt:** Hiển thị số liệu tổng quan của cửa hàng khi quản trị viên vào trang quản trị.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi quản trị viên truy cập `/admin`.
-  2. Hệ thống đếm số sản phẩm đang hoạt động, tổng số đơn hàng, tổng số người dùng.
-  3. Hệ thống hiển thị các số liệu này trên trang tổng quan. Use case kết thúc.
-- **Luồng rẽ nhánh:** Không có.
-- **Yêu cầu đặc biệt:** Không có.
-- **Tiền điều kiện:** Quản trị viên đã đăng nhập với `role = admin`.
-- **Hậu điều kiện:** Không có.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Employee, Admin.
+- **Luồng chính:** Xem danh sách phân trang và chi tiết; cập nhật trạng thái trong transaction với khóa dòng đơn. Nếu chuyển đơn hợp lệ sang cancelled, hoàn kho trước khi commit. Route tương thích `/admin/bills/cancel/:id` chỉ hủy `pending`/`confirmed`.
+- **Ngoại lệ:** Trạng thái không nằm trong danh sách hoặc chuyển tiếp không hợp lệ thì rollback và flash lỗi.
+- **Quyền:** Employee/admin.
 
-### 3.17. Use case: Quản lý sản phẩm (Admin)
+### UC-16 — Quản lý danh mục và nhân viên
 
-- **Actor:** Quản trị viên
-- **Mô tả vắn tắt:** Cho phép quản trị viên xem danh sách, thêm mới và sửa thông tin sản phẩm (không xóa cứng, chỉ ẩn khỏi cửa hàng).
-- **Luồng cơ bản (Thêm sản phẩm):**
-  1. Use case bắt đầu khi quản trị viên nhấn "Thêm sản phẩm" tại `/admin/products/new`.
-  2. Hệ thống hiển thị form nhập: tên, danh mục, thương hiệu, mô tả, giá, tồn kho, ảnh (tải lên hoặc dán URL).
-  3. Quản trị viên nhập thông tin và nhấn "Lưu".
-  4. Hệ thống kiểm tra hợp lệ tên/danh mục/giá/tồn kho; nếu có ảnh tải lên, hệ thống resize (tối đa 1600×1600) và nén sang định dạng WebP bằng `sharp` trước khi lưu vào `public/images/products`.
-  5. Hệ thống thêm bản ghi mới vào bảng `products` và thông báo thành công. Use case kết thúc.
-- **Luồng cơ bản (Sửa sản phẩm):** tương tự, khác ở bước 4–5: hệ thống cập nhật bản ghi hiện có
-  theo `id`; nếu không tải ảnh mới và không nhập URL mới, giữ nguyên ảnh cũ.
-- **Luồng rẽ nhánh:**
-  1. Nếu dữ liệu không hợp lệ (thiếu tên/danh mục/giá/tồn kho, hoặc giá trị vượt giới hạn), hệ
-     thống thông báo lỗi và giữ nguyên form.
-  2. Nếu tệp ảnh không đúng định dạng cho phép (`.jpg/.jpeg/.png/.webp`) hoặc vượt 5MB, hệ thống từ chối tải lên.
-  3. "Xóa" sản phẩm thực chất chỉ cập nhật `is_active = 0` (ẩn khỏi cửa hàng), không xóa bản ghi.
-- **Yêu cầu đặc biệt:** Chỉ vai trò quản trị viên được thực hiện use case này.
-- **Tiền điều kiện:** Quản trị viên đã đăng nhập.
-- **Hậu điều kiện:** Nếu thành công, bảng `products` được thêm mới hoặc cập nhật một bản ghi.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Admin.
+- **Luồng chính:** Tạo/sửa/xóa danh mục; tạo/sửa/xóa tài khoản employee. Mật khẩu nhân viên được bcrypt hash; `position` là mô tả chức vụ, còn `role` quyết định quyền.
+- **Ngoại lệ:** Dữ liệu không hợp lệ, email/số điện thoại trùng hoặc danh mục còn sản phẩm phụ thuộc thì từ chối thay đổi.
+- **Quyền:** Chỉ admin; các route tương ứng có middleware server-side.
 
-### 3.18. Use case: Quản lý danh mục (Admin)
+### UC-17 — Xem thống kê quản trị
 
-- **Actor:** Quản trị viên
-- **Mô tả vắn tắt:** Cho phép quản trị viên thêm, sửa, xóa danh mục sản phẩm.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi quản trị viên truy cập `/admin/categories`.
-  2. Quản trị viên nhập tên, slug (định danh URL), mô tả (tùy chọn) và nhấn "Lưu" để thêm mới, hoặc sửa một danh mục có sẵn.
-  3. Hệ thống kiểm tra tên và slug hợp lệ, không rỗng, đúng giới hạn độ dài.
-  4. Hệ thống thêm/cập nhật bản ghi trong bảng `categories`. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Nếu dữ liệu không hợp lệ, hệ thống thông báo lỗi.
-  2. Khi xóa một danh mục đang còn sản phẩm tham chiếu tới (ràng buộc khóa ngoại `ON DELETE RESTRICT`), hệ thống từ chối xóa và thông báo "Không thể xóa danh mục đang có sản phẩm."
-- **Yêu cầu đặc biệt:** Slug danh mục phải là duy nhất.
-- **Tiền điều kiện:** Quản trị viên đã đăng nhập.
-- **Hậu điều kiện:** Nếu thành công, bảng `categories` được thêm/sửa/xóa một bản ghi.
-- **Điểm mở rộng:** Không có.
+- **Tác nhân:** Employee, Admin.
+- **Luồng chính:** Khi truy cập `/admin`, hệ thống đếm sản phẩm đang hoạt động, đơn hàng và người dùng rồi hiển thị trang tổng quan.
+- **Giới hạn:** Đây là số liệu đếm tổng quan, không phải báo cáo doanh thu/biểu đồ.
 
-### 3.19. Use case: Quản lý đơn hàng (Admin)
+## 7. Yêu cầu phi chức năng
 
-- **Actor:** Quản trị viên
-- **Mô tả vắn tắt:** Cho phép quản trị viên xem danh sách, xem chi tiết và cập nhật trạng thái đơn hàng theo một luồng chuyển trạng thái hợp lệ.
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi quản trị viên truy cập `/admin/orders` (có phân trang 10 đơn/trang).
-  2. Quản trị viên chọn xem chi tiết một đơn để xem thông tin khách hàng, sản phẩm, số lượng, đơn giá.
-  3. Quản trị viên chọn trạng thái mới cho đơn hàng.
-  4. Hệ thống kiểm tra việc chuyển trạng thái có hợp lệ theo bảng chuyển đổi cho phép:
-     `pending → {confirmed, cancelled}`, `confirmed → {shipping, cancelled}`, `shipping → {completed}`,
-     `completed`/`cancelled` là trạng thái cuối (không chuyển tiếp được nữa).
-  5. Nếu chuyển sang `cancelled`, hệ thống hoàn lại tồn kho cho từng sản phẩm trong đơn.
-  6. Hệ thống cập nhật trạng thái đơn trong transaction có khóa dòng, commit và thông báo thành công. Use case kết thúc.
-- **Luồng rẽ nhánh:**
-  1. Nếu trạng thái gửi lên không hợp lệ, hệ thống thông báo "Trạng thái đơn hàng không hợp lệ."
-  2. Nếu bước chuyển trạng thái không được phép theo luồng ở bước 4, hệ thống thông báo "Không thể chuyển đơn hàng sang trạng thái đã chọn." và không thay đổi gì.
-  3. Hệ thống còn cung cấp hai thao tác nhanh tương thích ngược: "Duyệt đơn" (pending → confirmed) và "Hủy đơn" (pending/confirmed → cancelled).
-- **Yêu cầu đặc biệt:** Chỉ vai trò quản trị viên được thực hiện use case này.
-- **Tiền điều kiện:** Quản trị viên đã đăng nhập.
-- **Hậu điều kiện:** Nếu thành công, trạng thái đơn hàng trong bảng `orders` được cập nhật (và tồn kho được hoàn lại nếu hủy).
-- **Điểm mở rộng:** Không có.
+### 7.1. Bảo mật
 
-### 3.20. Use case: Quản lý tài khoản nhân viên (Admin)
+- Mật khẩu băm bằng bcrypt; không đưa password/hash vào session.
+- Form được bảo vệ bằng CSRF; Helmet thiết lập các HTTP security headers.
+- Nhóm route xác thực bị giới hạn tần suất 20 request trong 15 phút theo cấu hình hiện tại.
+- Dùng truy vấn tham số hóa cho dữ liệu người dùng trong các truy vấn SQL nghiệp vụ.
+- Nội dung EJS phải được render theo cơ chế escape mặc định; không đưa input tùy ý vào raw HTML.
+- Session cookie có `httpOnly`, `sameSite=lax`, `secure` khi `NODE_ENV=production`; secret lấy từ biến môi trường.
+- Request body bị giới hạn 100 KB; upload ảnh có giới hạn riêng 5 MB.
 
-- **Actor:** Quản trị viên
-- **Mô tả vắn tắt:** Cho phép quản trị viên thêm, sửa, xóa tài khoản có vai trò nhân viên (`role = employee`).
-- **Luồng cơ bản:**
-  1. Use case bắt đầu khi quản trị viên truy cập `/admin/users`.
-  2. Quản trị viên nhấn "Thêm nhân viên", nhập họ tên, email, số điện thoại, địa chỉ, giới tính, ngày sinh, mật khẩu, rồi lưu.
-  3. Hệ thống kiểm tra dữ liệu hợp lệ (định dạng email, độ dài các trường, mật khẩu tối thiểu 6 ký tự khi tạo mới).
-  4. Hệ thống băm mật khẩu và thêm bản ghi vào bảng `users` với `role = 'employee'`. Use case kết thúc.
-  5. Khi sửa, các bước tương tự nhưng mật khẩu là tùy chọn (chỉ băm và cập nhật nếu quản trị viên nhập mật khẩu mới).
-- **Luồng rẽ nhánh:**
-  1. Nếu dữ liệu không hợp lệ, hệ thống thông báo lỗi và giữ nguyên form.
-  2. Nếu email đã tồn tại, hệ thống thông báo "Email nhân viên đã tồn tại."
-- **Yêu cầu đặc biệt:** Email nhân viên phải duy nhất trong toàn bộ bảng `users`.
-- **Tiền điều kiện:** Quản trị viên đã đăng nhập.
-- **Hậu điều kiện:** Nếu thành công, bảng `users` được thêm/sửa/xóa một bản ghi có `role = employee`.
-- **Điểm mở rộng:** Hiện chưa có luồng đăng nhập/chức năng riêng cho vai trò nhân viên sau khi tài khoản được tạo (xem ghi chú ở mục 1.1 và 1.3).
+### 7.2. Toàn vẹn và xử lý đồng thời
 
----
+- Các thao tác đặt/hủy đơn và chuyển trạng thái ảnh hưởng tồn kho sử dụng transaction.
+- Khóa dòng đơn/sản phẩm bằng `FOR UPDATE` tại các bước cần tránh cập nhật đồng thời.
+- Khóa ngoại và unique key được định nghĩa trong schema/migration.
 
-## 4. LUỒNG HOẠT ĐỘNG (ACTIVITY FLOW) CỦA CÁC NGHIỆP VỤ CHÍNH
+### 7.3. Khả dụng và giao diện
 
-### 4.1. Luồng Đăng ký
+- Giao diện render bằng EJS, CSS responsive; thông báo thao tác dùng flash message.
+- Danh sách sản phẩm và đơn hàng có phân trang.
+- Lỗi request được chuyển tới middleware lỗi chung; route không được quyền trả hướng điều hướng/thông báo theo quy ước hiện có.
+
+### 7.4. Hạn chế kỹ thuật đang biết
+
+- `express-session` đang dùng store mặc định MemoryStore; không phù hợp triển khai nhiều instance hoặc giữ session bền qua lần khởi động lại.
+- Ảnh sản phẩm lưu trong filesystem của ứng dụng; cần storage bền vững nếu nền tảng triển khai có filesystem tạm.
+- Đổi mật khẩu cập nhật credential DB nhưng không thu hồi session đang hoạt động ở thiết bị/phiên khác.
+- Chưa có cổng thanh toán trực tuyến, gửi email giao dịch hoặc báo cáo doanh thu chuyên sâu.
+
+## 8. Luồng nghiệp vụ chính
+
+### 8.1. Đổi mật khẩu
 
 ```mermaid
 flowchart TD
-    A([Bắt đầu]) --> B[Khách vào trang Đăng ký]
-    B --> C[Nhập họ tên, email, mật khẩu, xác nhận mật khẩu]
-    C --> D{Đủ thông tin bắt buộc?}
-    D -- Không --> E[Thông báo lỗi thiếu thông tin] --> C
-    D -- Có --> F{Mật khẩu khớp xác nhận và >= 6 ký tự?}
-    F -- Không --> G[Thông báo lỗi mật khẩu] --> C
-    F -- Có --> H{Email đã tồn tại?}
-    H -- Có --> I[Thông báo email đã đăng ký] --> C
-    H -- Không --> J[Băm mật khẩu, tạo bản ghi users role=user]
-    J --> K[Chuyển hướng sang trang Đăng nhập]
-    K --> L([Kết thúc])
+    A[Nhấn Đổi mật khẩu] --> B[Nhập mật khẩu hiện tại, mới và xác nhận]
+    B --> C{Đủ trường, tối thiểu 6 ký tự và khớp?}
+    C -- Không --> D[Flash lỗi, quay lại hồ sơ]
+    C -- Có --> E[Đọc password_hash từ users]
+    E --> F{bcrypt.compare mật khẩu hiện tại}
+    F -- Không --> D
+    F -- Có --> G[Băm mật khẩu mới bằng bcrypt]
+    G --> H[UPDATE users.password_hash]
+    H --> I[Đọc lại DB và xác minh hash mới]
+    I --> J{Cập nhật được xác nhận?}
+    J -- Không --> K[Chuyển lỗi tới middleware lỗi]
+    J -- Có --> L[Flash thành công và về /profile]
 ```
 
-### 4.2. Luồng Đăng nhập
+### 8.2. Đặt hàng
 
 ```mermaid
 flowchart TD
-    A([Bắt đầu]) --> B[Nhập email và mật khẩu]
-    B --> C{Tìm thấy email trong users?}
-    C -- Không --> E[Thông báo sai email/mật khẩu] --> B
-    C -- Có --> D{Mật khẩu khớp bcrypt?}
-    D -- Không --> E
-    D -- Có --> F[Lưu id, họ tên, email, role vào session]
-    F --> G{Có returnTo = checkout?}
-    G -- Có --> H[Chuyển tới trang Thanh toán]
-    G -- Không --> I{role = admin?}
-    I -- Có --> J[Chuyển tới /admin]
-    I -- Không --> K[Chuyển tới trang chủ]
-    H --> L([Kết thúc])
-    J --> L
-    K --> L
+    A[Checkout từ giỏ hoặc mua ngay] --> B{Có sản phẩm?}
+    B -- Không --> C[Thông báo và quay về giỏ]
+    B -- Có --> D[Kiểm tra thông tin giao hàng]
+    D --> E[Bắt đầu transaction]
+    E --> F[Khóa sản phẩm và kiểm tra tồn]
+    F --> G{Đủ tồn cho tất cả?}
+    G -- Không --> H[Rollback, thông báo lỗi]
+    G -- Có --> I[Tạo orders và order_items]
+    I --> J[Trừ tồn kho]
+    J --> K[Xóa dữ liệu giỏ tương ứng]
+    K --> L[Commit và thông báo mã đơn]
 ```
 
-### 4.3. Luồng Đặt hàng (Thanh toán)
+### 8.3. Nhân viên hủy đơn
 
 ```mermaid
 flowchart TD
-    A([Bắt đầu]) --> B[Khách hàng vào trang Thanh toán]
-    B --> C{Giỏ hàng / Mua ngay có sản phẩm?}
-    C -- Không --> D[Thông báo giỏ hàng trống] --> Z([Kết thúc])
-    C -- Có --> E[Nhập tên người nhận, địa chỉ, SĐT, ghi chú]
-    E --> F{Thông tin hợp lệ?}
-    F -- Không --> G[Thông báo lỗi] --> E
-    F -- Có --> H[Mở transaction, khóa từng dòng sản phẩm]
-    H --> I{Đủ tồn kho cho tất cả sản phẩm?}
-    I -- Không --> J[Rollback, thông báo lỗi tồn kho] --> Z
-    I -- Có --> K[Tạo bản ghi orders + order_items, trừ tồn kho]
-    K --> L[Commit transaction]
-    L --> M[Xóa giỏ hàng / buyNow khỏi session]
-    M --> N[Thông báo đặt hàng thành công kèm mã đơn]
-    N --> Z
+    A[Employee/Admin yêu cầu hủy] --> B[Bắt đầu transaction, khóa đơn]
+    B --> C{Đơn tồn tại và trạng thái pending/confirmed?}
+    C -- Không --> D[Rollback và thông báo lỗi]
+    C -- Có --> E[Đọc order_items, hoàn từng số lượng về kho]
+    E --> F[Cập nhật status=cancelled]
+    F --> G[Commit và thông báo thành công]
 ```
 
-### 4.4. Luồng Quản trị viên cập nhật trạng thái đơn hàng
+## 9. Điều kiện nghiệm thu
 
-```mermaid
-flowchart TD
-    A([Bắt đầu]) --> B[Admin chọn trạng thái mới cho đơn hàng]
-    B --> C{Trạng thái hợp lệ trong danh sách cho phép?}
-    C -- Không --> D[Thông báo trạng thái không hợp lệ] --> Z([Kết thúc])
-    C -- Có --> E[Mở transaction, khóa dòng đơn hàng]
-    E --> F{Chuyển đổi có nằm trong bảng luồng cho phép?}
-    F -- Không --> G[Rollback, thông báo không thể chuyển trạng thái] --> Z
-    F -- Có --> H{Trạng thái mới = cancelled?}
-    H -- Có --> I[Hoàn lại tồn kho từng sản phẩm trong đơn]
-    H -- Không --> J[Bỏ qua bước hoàn kho]
-    I --> K[Cập nhật orders.status]
-    J --> K
-    K --> L[Commit transaction, thông báo thành công]
-    L --> Z
-```
-
-### 4.5. Luồng Hủy đơn hàng (Khách hàng)
-
-```mermaid
-flowchart TD
-    A([Bắt đầu]) --> B[Khách hàng nhấn Hủy đơn hàng]
-    B --> C[Mở transaction, khóa dòng đơn hàng]
-    C --> D{Đơn thuộc khách hàng và đang pending?}
-    D -- Không --> E[Rollback ngầm, không đổi trạng thái] --> H([Kết thúc])
-    D -- Có --> F[Hoàn lại tồn kho từng sản phẩm trong đơn]
-    F --> G[Cập nhật orders.status = cancelled, commit]
-    G --> H
-```
-
----
-
-## 5. GHI CHÚ / HẠN CHẾ HIỆN TẠI CỦA HỆ THỐNG
-
-Phần này nên đưa vào mục "Kết luận / Hướng phát triển" của báo cáo, theo đúng tinh thần Nhóm 16 đã
-nêu hạn chế ở cuối báo cáo của họ:
-
-1. **Chưa tích hợp thanh toán trực tuyến:** đơn hàng chỉ được ghi nhận trong hệ thống, chưa kết nối cổng thanh toán (VNPay, Momo...).
-2. **Giỏ hàng chưa bền vững:** lưu trong session thay vì bảng `cart_items` đã định nghĩa sẵn trong `schema.sql` — nên mất khi hết phiên hoặc đổi thiết bị.
-3. **Vai trò `employee` chưa có khu vực chức năng riêng:** hiện chỉ dùng để quản trị viên tạo/sửa/xóa tài khoản, chưa có luồng đăng nhập và trang làm việc dành riêng cho nhân viên như trong khảo sát ban đầu của tổ chức (mục 1.1).
-4. **Bảo mật phiên & dữ liệu nhạy cảm:** đã áp dụng `bcrypt`, `csurf`, `helmet`, giới hạn tần suất — có thể bổ sung xác thực hai lớp hoặc mã hóa thêm cho các trường liên hệ nếu cần nâng cao hơn.
+- Guest không thể dùng chức năng yêu cầu đăng nhập; user không thể truy cập khu vực admin.
+- Employee thao tác được sản phẩm/đơn hàng nhưng bị từ chối ở route quản lý danh mục/nhân viên.
+- User chỉ xem được chi tiết đơn của chính mình.
+- Đổi mật khẩu thành công được ghi vào `users.password_hash`; đăng nhập mới bằng mật khẩu mới thành công, mật khẩu cũ bị từ chối.
+- Hủy đơn hợp lệ hoàn kho đúng một lần và cập nhật trạng thái nguyên tử; đơn đã hủy/hoàn tất không thể hủy lần nữa.
+- Schema và các migration cần thiết được áp dụng đúng trên database kiểm thử.
+- Các luồng nêu trên được kiểm thử thủ công hoặc tự động trên môi trường có database, trước khi nghiệm thu production.

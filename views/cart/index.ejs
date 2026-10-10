@@ -20,6 +20,10 @@
 					<div>
 						<h2><a href="/products/<%= item.id %>"><%= item.name %></a></h2>
 						<p><%= item.price.toLocaleString('vi-VN') %> đ / sản phẩm</p>
+						<% if (!item.is_active || item.stock_qty < 1) { %>
+							<p class="form-help">Sản phẩm không còn khả dụng. Hãy xóa sản phẩm khỏi giỏ.</p>
+						<% } else { %>
+							<% if (item.quantity > item.stock_qty) { %><p class="form-help">Chỉ còn <%= item.stock_qty %> sản phẩm trong kho.</p><% } %>
 						<form class="quantity-form" method="post" action="/cart/update/<%= item.id %>">
 							<input type="hidden" name="_csrf" value="<%= csrfToken %>">
 								<div class="quantity-field">
@@ -32,6 +36,7 @@
 								</div>
 							<button class="text-button" type="submit">Cập nhật</button>
 						</form>
+						<% } %>
 					</div>
 					<strong><%= (item.quantity * item.price).toLocaleString('vi-VN') %> đ</strong>
 					<form method="post" action="/cart/remove/<%= item.id %>">

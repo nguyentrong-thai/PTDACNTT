@@ -12,6 +12,7 @@ const { rateLimit } = require('express-rate-limit');
 const { testConnection } = require('./config/db');
 const indexRoutes = require('./routes/index');
 const profileRoutes = require('./routes/profileRoutes');
+const CartModel = require('./models/cartModel');
 
 const app = express();
 const sessionSecret = process.env.SESSION_SECRET;
@@ -61,15 +62,17 @@ const authLimiter = rateLimit({
 });
 
 // Biến dùng chung cho mọi view (user đăng nhập, thông báo flash...)
-app.use((req, res, next) => {
-  res.locals.currentUser = req.session.user || null;
-  res.locals.cartCount = (req.session.cart || []).reduce((sum, item) => sum + item.quantity, 0);
-  res.locals.success = req.flash('success');
-  res.locals.error = req.flash('error');
-  res.locals.csrfToken = req.csrfToken();
-  res.locals.isAdminPage = req.path.startsWith('/admin');
-  res.locals.currentPath = req.path;
-  next();
+app.use(async (req, res, next) => {
+  try {
+    res.locals.currentUser = req.session.user || null;
+    res.locals.cartCount = req.session.user ? await CartModel.countQuantity(req.session.user.id) : 0;
+    res.locals.success = req.flash('success');
+    res.locals.error = req.flash('error');
+    res.locals.csrfToken = req.csrfToken();
+    res.locals.isAdminPage = req.path.startsWith('/admin');
+    res.locals.currentPath = req.path;
+    next();
+  } catch (err) { next(err); }
 });
 
 // ---------- Routes ----------

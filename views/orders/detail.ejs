@@ -1,0 +1,40 @@
+<%- include('../partials/header') %>
+<section class="page-heading">
+  <p class="eyebrow">CHI TIẾT ĐƠN HÀNG</p>
+  <h1>Đơn hàng #<%= order.id %></h1>
+  <p class="muted"><%= new Date(order.created_at).toLocaleString('vi-VN') %></p>
+</section>
+
+<div class="section-row">
+  <a class="text-button" href="/orders">Quay lại đơn hàng</a>
+  <span class="order-status status-<%= order.status %>"><%= { pending: 'Chờ duyệt', confirmed: 'Đã duyệt', shipping: 'Đang giao', completed: 'Hoàn tất', cancelled: 'Đã hủy' }[order.status] %></span>
+</div>
+
+<div class="cart-layout">
+  <section class="admin-table">
+    <% items.forEach((item) => { %>
+      <article class="table-row order-row">
+        <div class="admin-product">
+          <img src="<%= item.image_url || '/images/no-image.svg' %>" alt="<%= item.name %>">
+          <div><strong><%= item.name %></strong><small><%= Number(item.unit_price).toLocaleString('vi-VN') %> đ x <%= item.quantity %></small></div>
+        </div>
+        <strong><%= (Number(item.unit_price) * item.quantity).toLocaleString('vi-VN') %> đ</strong>
+      </article>
+    <% }) %>
+  </section>
+  <aside class="cart-summary">
+    <p class="eyebrow">GIAO HÀNG</p>
+    <p><strong><%= order.recipient_name %></strong></p>
+    <p><%= order.shipping_phone %></p>
+    <p><%= order.shipping_address %></p>
+    <% if (order.note) { %><p>Ghi chú: <%= order.note %></p><% } %>
+    <div class="summary-total"><span>Tổng đơn</span><strong><%= Number(order.total_amount).toLocaleString('vi-VN') %> đ</strong></div>
+    <% if (order.status === 'pending') { %>
+      <form method="post" action="/orders/<%= order.id %>/cancel" onsubmit="return confirm('Bạn có chắc chắn muốn hủy đơn hàng này?')">
+        <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+        <button class="text-button" type="submit">Hủy đơn hàng</button>
+      </form>
+    <% } %>
+  </aside>
+</div>
+<%- include('../partials/footer') %>

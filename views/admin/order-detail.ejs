@@ -1,7 +1,7 @@
 <%- include('../partials/header') %>
 <section class="page-heading"><p class="eyebrow">QUẢN LÝ HÓA ĐƠN</p><h1>Chi tiết đơn hàng #<%= order.id %></h1></section>
 <section class="admin-panel order-detail-panel">
-  <div class="section-row"><h2>Thông tin nhận hàng</h2><span class="order-status status-<%= order.status %>"><%= { pending: 'Chờ xác nhận', confirmed: 'Đã xác nhận', shipping: 'Đang giao', completed: 'Hoàn tất', cancelled: 'Đã hủy' }[order.status] %></span></div>
+  <div class="section-row"><h2>Thông tin nhận hàng</h2><span class="order-status status-<%= order.status %>"><%= { pending: 'Chờ duyệt', confirmed: 'Đã duyệt', shipping: 'Đang giao', completed: 'Hoàn tất', cancelled: 'Đã hủy' }[order.status] %></span></div>
   <p><strong>Tên người nhận:</strong> <%= order.recipient_name %></p>
   <p><strong>Số điện thoại:</strong> <%= order.shipping_phone %></p>
   <p><strong>Địa chỉ:</strong> <%= order.shipping_address %></p>

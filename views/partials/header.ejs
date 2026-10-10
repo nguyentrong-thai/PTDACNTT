@@ -14,9 +14,9 @@
       <a class="admin-side-brand" href="/admin">TRANG CHỦ</a>
       <nav>
         <% if (currentUser.role !== 'admin') { %><a class="<%= currentPath.startsWith('/profile') ? 'is-active' : '' %>" href="/profile">Thông tin cá nhân</a><% } %>
-        <a class="<%= currentPath.startsWith('/admin/users') ? 'is-active' : '' %>" href="/admin/users">Quản lý tài khoản</a>
+        <% if (currentUser.role === 'admin') { %><a class="<%= currentPath.startsWith('/admin/users') ? 'is-active' : '' %>" href="/admin/users">Quản lý tài khoản</a><% } %>
         <a class="<%= currentPath.startsWith('/admin/products') ? 'is-active' : '' %>" href="/admin/products">Quản lý sản phẩm</a>
-        <a class="<%= currentPath.startsWith('/admin/categories') ? 'is-active' : '' %>" href="/admin/categories">Quản lý thể loại</a>
+        <% if (currentUser.role === 'admin') { %><a class="<%= currentPath.startsWith('/admin/categories') ? 'is-active' : '' %>" href="/admin/categories">Quản lý thể loại</a><% } %>
         <a class="<%= currentPath.startsWith('/admin/orders') || currentPath.startsWith('/admin/bills') ? 'is-active' : '' %>" href="/admin/orders">Quản lý hóa đơn</a>
       </nav>
     </aside>
@@ -37,7 +37,7 @@
             <i class="far fa-question-circle" aria-hidden="true"></i><span>Hỗ trợ</span>
           </a>
           <% if (currentUser) { %>
-            <% if (currentUser.role === 'admin') { %><a href="/admin">Quản trị</a><% } %>
+            <% if (['admin', 'employee'].includes(currentUser.role)) { %><a href="/admin">Quản trị</a><% } %>
             <a href="/profile">Tài khoản</a>
             <span>Xin chào, <%= currentUser.full_name %></span>
             <form class="inline-form" method="post" action="/auth/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="text-button" type="submit" data-confirm-logout>Đăng xuất</button></form>

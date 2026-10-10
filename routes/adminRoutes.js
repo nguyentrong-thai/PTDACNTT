@@ -5,10 +5,11 @@ const multer = require('multer');
 const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const { pool } = require('../config/db');
-const { requireAdmin } = require('../middlewares/authMiddleware');
+const { requireStaff, requireAdmin } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
-router.use(requireAdmin);
+router.use(requireStaff);
+router.use(['/users', '/staff', '/staffs', '/categories'], requireAdmin);
 
 function getPage(value, limit) {
   const page = Math.max(1, Number.parseInt(value, 10) || 1);
@@ -26,6 +27,16 @@ const upload = multer({
     callback(new Error('Chỉ được upload file hình ảnh.'));
   },
 });
+
+function handleImageUpload(req, res, next) {
+  upload.single('image')(req, res, (error) => {
+    if (!error) return next();
+    req.flash('error', error.code === 'LIMIT_FILE_SIZE'
+      ? 'Ảnh sản phẩm không được vượt quá 5 MB.'
+      : 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.');
+    res.redirect(req.params.id ? `/admin/products/${req.params.id}/edit` : '/admin/products/new');
+  });
+}
 
 async function saveUploadedImage(file) {
   if (!file) return null;
@@ -64,23 +75,30 @@ function validateProductInput({ name, category_id, price, stock_qty } = {}) {
 
 function getCategoryInput({ name, slug, description } = {}) {
   if (typeof name !== 'string' || !name.trim() || name.trim().length > 100) return null;
-  if (typeof slug !== 'string' || !slug.trim() || slug.trim().length > 120) return null;
+  const normalizedSlug = typeof slug === 'string' && slug.trim()
+    ? slug.trim().toLowerCase().replace(/[^a-z0-9-]+/g, '-').replace(/-+/g, '-').replace(/^-|-$/g, '')
+    : name.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/gi, 'd').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  if (!normalizedSlug || normalizedSlug.length > 120) return null;
   return {
     name: name.trim(),
-    slug: slug.trim(),
+    slug: normalizedSlug,
     description: typeof description === 'string' && description.trim() ? description.trim() : null,
   };
 }
 
-function getEmployeeInput({ full_name, email, phone, address, gender, date_of_birth, password } = {}, { requirePassword = true } = {}) {
+function getEmployeeInput({ full_name, email, phone, address, gender, date_of_birth, position, password } = {}, { requirePassword = true } = {}) {
   if (typeof full_name !== 'string' || !full_name.trim() || full_name.trim().length > 100) return null;
   if (typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email.trim()) || email.trim().length > 150) return null;
-  if (typeof phone !== 'string' || phone.trim().length > 20) return null;
+  if (typeof phone !== 'string' || !/^[0-9+()\-\s]{8,20}$/.test(phone.trim())) return null;
   if (typeof address !== 'string' || address.trim().length > 255) return null;
+  if (typeof position !== 'string' || !position.trim() || position.trim().length > 100) return null;
   if (gender && !['male', 'female', 'other'].includes(gender)) return null;
-  if (date_of_birth && !/^\d{4}-\d{2}-\d{2}$/.test(date_of_birth)) return null;
-  if (requirePassword && (typeof password !== 'string' || password.length < 6)) return null;
-  if (!requirePassword && password && password.length < 6) return null;
+  if (date_of_birth) {
+    const parsedDate = new Date(`${date_of_birth}T00:00:00Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date_of_birth) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date_of_birth) return null;
+  }
+  if (requirePassword && (typeof password !== 'string' || password.length < 8)) return null;
+  if (!requirePassword && password && password.length < 8) return null;
   return {
     fullName: full_name.trim(),
     email: email.trim().toLowerCase(),
@@ -88,8 +106,47 @@ function getEmployeeInput({ full_name, email, phone, address, gender, date_of_bi
     address: address.trim() || null,
     gender: gender || null,
     dateOfBirth: date_of_birth || null,
+    position: position.trim(),
     password: password || null,
   };
+}
+
+async function updateOrderStatus(orderId, status) {
+  const allowedTransitions = {
+    pending: ['confirmed', 'cancelled'],
+    confirmed: ['shipping', 'cancelled'],
+    shipping: ['completed'],
+    completed: [],
+    cancelled: [],
+  };
+  let connection;
+  try {
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [[order]] = await connection.query('SELECT id, status FROM orders WHERE id = ? FOR UPDATE', [orderId]);
+    if (!order) {
+      await connection.rollback();
+      return 'not_found';
+    }
+    if (order.status !== status && !allowedTransitions[order.status].includes(status)) {
+      await connection.rollback();
+      return 'invalid_transition';
+    }
+    if (order.status !== status && status === 'cancelled') {
+      const [items] = await connection.query('SELECT product_id, quantity FROM order_items WHERE order_id = ?', [order.id]);
+      for (const item of items) {
+        await connection.query('UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?', [item.quantity, item.product_id]);
+      }
+    }
+    await connection.query('UPDATE orders SET status = ? WHERE id = ?', [status, order.id]);
+    await connection.commit();
+    return 'updated';
+  } catch (error) {
+    if (connection) await connection.rollback();
+    throw error;
+  } finally {
+    if (connection) connection.release();
+  }
 }
 
 router.get('/', async (req, res, next) => {
@@ -120,7 +177,7 @@ router.get('/products', async (req, res, next) => {
 router.get('/users', async (req, res, next) => {
   try {
     const [employees] = await pool.query(
-      "SELECT id, full_name, email, phone, address, gender, date_of_birth, role, created_at FROM users WHERE role = 'employee' ORDER BY created_at DESC"
+      "SELECT id, full_name, email, phone, address, gender, date_of_birth, position, role, created_at FROM users WHERE role = 'employee' ORDER BY created_at DESC"
     );
     res.render('admin/users', { title: 'Quản lý nhân viên', employees });
   } catch (err) { next(err); }
@@ -141,14 +198,14 @@ router.post('/users', async (req, res, next) => {
     }
     const passwordHash = await bcrypt.hash(employee.password, 12);
     await pool.query(
-      'INSERT INTO users (full_name, email, password_hash, phone, address, gender, date_of_birth, role) VALUES (?, ?, ?, ?, ?, ?, ?, \'employee\')',
-      [employee.fullName, employee.email, passwordHash, employee.phone, employee.address, employee.gender, employee.dateOfBirth]
+      'INSERT INTO users (full_name, email, password_hash, phone, address, gender, date_of_birth, position, role) VALUES (?, ?, ?, ?, ?, ?, ?, ?, \'employee\')',
+      [employee.fullName, employee.email, passwordHash, employee.phone, employee.address, employee.gender, employee.dateOfBirth, employee.position]
     );
     req.flash('success', 'Đã thêm tài khoản nhân viên.');
     res.redirect('/admin/users');
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
-      req.flash('error', 'Email nhân viên đã tồn tại.');
+      req.flash('error', 'Email hoặc số điện thoại nhân viên đã tồn tại.');
       return res.redirect('/admin/users/new');
     }
     next(err);
@@ -158,7 +215,7 @@ router.post('/users', async (req, res, next) => {
 router.get('/users/:id/edit', async (req, res, next) => {
   try {
     const [[employee]] = await pool.query(
-      "SELECT id, full_name, email, phone, address, gender, date_of_birth, role FROM users WHERE id = ? AND role = 'employee'",
+      "SELECT id, full_name, email, phone, address, gender, date_of_birth, position, role FROM users WHERE id = ? AND role = 'employee'",
       [req.params.id]
     );
     if (!employee) return res.status(404).render('404', { title: 'Không tìm thấy nhân viên' });
@@ -178,20 +235,20 @@ router.post('/users/:id/update', async (req, res, next) => {
     if (employee.password) {
       const passwordHash = await bcrypt.hash(employee.password, 12);
       await pool.query(
-        'UPDATE users SET full_name = ?, email = ?, password_hash = ?, phone = ?, address = ?, gender = ?, date_of_birth = ? WHERE id = ? AND role = \'employee\'',
-        [employee.fullName, employee.email, passwordHash, employee.phone, employee.address, employee.gender, employee.dateOfBirth, req.params.id]
+        'UPDATE users SET full_name = ?, email = ?, password_hash = ?, phone = ?, address = ?, gender = ?, date_of_birth = ?, position = ? WHERE id = ? AND role = \'employee\'',
+        [employee.fullName, employee.email, passwordHash, employee.phone, employee.address, employee.gender, employee.dateOfBirth, employee.position, req.params.id]
       );
     } else {
       await pool.query(
-        'UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, gender = ?, date_of_birth = ? WHERE id = ? AND role = \'employee\'',
-        [employee.fullName, employee.email, employee.phone, employee.address, employee.gender, employee.dateOfBirth, req.params.id]
+        'UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, gender = ?, date_of_birth = ?, position = ? WHERE id = ? AND role = \'employee\'',
+        [employee.fullName, employee.email, employee.phone, employee.address, employee.gender, employee.dateOfBirth, employee.position, req.params.id]
       );
     }
     req.flash('success', 'Đã cập nhật tài khoản nhân viên.');
     res.redirect('/admin/users');
   } catch (err) {
     if (err.code === 'ER_DUP_ENTRY') {
-      req.flash('error', 'Email nhân viên đã tồn tại.');
+      req.flash('error', 'Email hoặc số điện thoại nhân viên đã tồn tại.');
       return res.redirect(`/admin/users/${req.params.id}/edit`);
     }
     next(err);
@@ -213,7 +270,7 @@ router.get('/products/new', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/products', upload.single('image'), async (req, res, next) => {
+router.post('/products', handleImageUpload, async (req, res, next) => {
   try {
     const { name, category_id, brand, description, price, stock_qty, image_url } = req.body;
     const product = validateProductInput({ name, category_id, price, stock_qty });
@@ -241,7 +298,7 @@ router.get('/products/:id/edit', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/products/:id/update', upload.single('image'), async (req, res, next) => {
+router.post('/products/:id/update', handleImageUpload, async (req, res, next) => {
   try {
     const { name, category_id, brand, description, price, stock_qty, image_url } = req.body;
     const product = validateProductInput({ name, category_id, price, stock_qty });
@@ -257,16 +314,32 @@ router.post('/products/:id/update', upload.single('image'), async (req, res, nex
       [product.categoryId, product.name, brand || null, description || null, product.price, product.stockQuantity, finalImageUrl, req.params.id]
     );
     req.flash('success', 'Đã cập nhật sản phẩm.');
-    res.redirect('/admin');
+    res.redirect('/admin/products');
   } catch (err) { next(err); }
 });
 
 router.post('/products/:id/delete', async (req, res, next) => {
   try {
-    await pool.query('UPDATE products SET is_active = 0 WHERE id = ?', [req.params.id]);
-    req.flash('success', 'Đã ẩn sản phẩm khỏi cửa hàng.');
-    res.redirect('/admin');
-  } catch (err) { next(err); }
+    const [[product]] = await pool.query('SELECT id FROM products WHERE id = ?', [req.params.id]);
+    if (!product) {
+      req.flash('error', 'Không tìm thấy sản phẩm.');
+      return res.redirect('/admin/products');
+    }
+    const [[orderReference]] = await pool.query('SELECT COUNT(*) AS total FROM order_items WHERE product_id = ?', [req.params.id]);
+    if (Number(orderReference.total)) {
+      req.flash('error', 'Không thể xóa sản phẩm đã có trong đơn hàng.');
+      return res.redirect('/admin/products');
+    }
+    await pool.query('DELETE FROM products WHERE id = ?', [req.params.id]);
+    req.flash('success', 'Đã xóa sản phẩm.');
+    res.redirect('/admin/products');
+  } catch (err) {
+    if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+      req.flash('error', 'Không thể xóa sản phẩm đã có trong đơn hàng.');
+      return res.redirect('/admin/products');
+    }
+    next(err);
+  }
 });
 
 router.get('/categories', async (req, res, next) => {
@@ -288,26 +361,38 @@ router.post('/categories', async (req, res, next) => {
   try {
     const category = getCategoryInput(req.body);
     if (!category) {
-      req.flash('error', 'Vui lòng nhập tên danh mục và slug hợp lệ.');
+      req.flash('error', 'Vui lòng nhập tên danh mục hợp lệ.');
       return res.redirect('/admin/categories');
     }
     await pool.query('INSERT INTO categories (name, slug, description) VALUES (?, ?, ?)', [category.name, category.slug, category.description]);
     req.flash('success', 'Đã thêm danh mục.');
     res.redirect('/admin/categories');
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      req.flash('error', 'Tên hoặc slug danh mục đã tồn tại.');
+      return res.redirect('/admin/categories');
+    }
+    next(err);
+  }
 });
 
 router.post('/categories/:id/update', async (req, res, next) => {
   try {
     const category = getCategoryInput(req.body);
     if (!category) {
-      req.flash('error', 'Vui lòng nhập tên danh mục và slug hợp lệ.');
+      req.flash('error', 'Vui lòng nhập tên danh mục hợp lệ.');
       return res.redirect(`/admin/categories/${req.params.id}/edit`);
     }
     await pool.query('UPDATE categories SET name = ?, slug = ?, description = ? WHERE id = ?', [category.name, category.slug, category.description, req.params.id]);
     req.flash('success', 'Đã cập nhật danh mục.');
     res.redirect('/admin/categories');
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      req.flash('error', 'Tên hoặc slug danh mục đã tồn tại.');
+      return res.redirect(`/admin/categories/${req.params.id}/edit`);
+    }
+    next(err);
+  }
 });
 
 router.post('/categories/:id/delete', async (req, res, next) => {
@@ -316,8 +401,11 @@ router.post('/categories/:id/delete', async (req, res, next) => {
     req.flash('success', 'Đã xóa danh mục.');
     res.redirect('/admin/categories');
   } catch (err) {
-    req.flash('error', 'Không thể xóa danh mục đang có sản phẩm.');
-    res.redirect('/admin/categories');
+    if (err.code === 'ER_ROW_IS_REFERENCED_2') {
+      req.flash('error', 'Không thể xóa danh mục đang có sản phẩm.');
+      return res.redirect('/admin/categories');
+    }
+    next(err);
   }
 });
 
@@ -336,55 +424,25 @@ router.get('/orders', async (req, res, next) => {
 });
 
 router.post('/orders/:id/status', async (req, res, next) => {
-  let connection;
-  let transactionStarted = false;
   try {
-    const allowedTransitions = {
-      pending: ['confirmed', 'cancelled'],
-      confirmed: ['shipping', 'cancelled'],
-      shipping: ['completed'],
-      completed: [],
-      cancelled: [],
-    };
     const validStatuses = ['pending', 'confirmed', 'shipping', 'completed', 'cancelled'];
     if (!validStatuses.includes(req.body.status)) {
       req.flash('error', 'Trạng thái đơn hàng không hợp lệ.');
       return res.redirect('/admin/orders');
     }
-
-    connection = await pool.getConnection();
-    await connection.beginTransaction();
-    transactionStarted = true;
-    const [[order]] = await connection.query('SELECT id, status FROM orders WHERE id = ? FOR UPDATE', [req.params.id]);
-    if (!order) {
-      await connection.rollback();
-      transactionStarted = false;
+    const result = await updateOrderStatus(req.params.id, req.body.status);
+    if (result === 'not_found') {
       req.flash('error', 'Không tìm thấy đơn hàng.');
       return res.redirect('/admin/orders');
     }
-    if (order.status !== req.body.status && !allowedTransitions[order.status].includes(req.body.status)) {
-      await connection.rollback();
-      transactionStarted = false;
+    if (result === 'invalid_transition') {
       req.flash('error', 'Không thể chuyển đơn hàng sang trạng thái đã chọn.');
       return res.redirect('/admin/orders');
     }
-
-    if (order.status !== req.body.status && req.body.status === 'cancelled') {
-      const [items] = await connection.query('SELECT product_id, quantity FROM order_items WHERE order_id = ?', [order.id]);
-      for (const item of items) {
-        await connection.query('UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?', [item.quantity, item.product_id]);
-      }
-    }
-    await connection.query('UPDATE orders SET status = ? WHERE id = ?', [req.body.status, order.id]);
-    await connection.commit();
-    transactionStarted = false;
     req.flash('success', 'Đã cập nhật trạng thái đơn hàng.');
     res.redirect('/admin/orders');
   } catch (err) {
-    if (connection && transactionStarted) await connection.rollback();
     next(err);
-  } finally {
-    if (connection) connection.release();
   }
 });
 
@@ -425,18 +483,59 @@ router.get('/orders/:id', async (req, res, next) => {
 
 router.post('/bills/approve/:id', async (req, res, next) => {
   try {
-    await pool.query("UPDATE orders SET status = 'confirmed' WHERE id = ? AND status = 'pending'", [req.params.id]);
+    const result = await updateOrderStatus(req.params.id, 'confirmed');
+    if (result !== 'updated') {
+      req.flash('error', result === 'not_found' ? 'Không tìm thấy đơn hàng.' : 'Chỉ đơn hàng chờ duyệt mới được duyệt.');
+      return res.redirect('/admin/orders');
+    }
     req.flash('success', 'Đã duyệt đơn hàng.');
     res.redirect('/admin/orders');
   } catch (err) { next(err); }
 });
 
 router.post('/bills/cancel/:id', async (req, res, next) => {
+  let connection;
   try {
-    await pool.query("UPDATE orders SET status = 'cancelled' WHERE id = ? AND status IN ('pending', 'confirmed')", [req.params.id]);
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    const [[order]] = await connection.query(
+      'SELECT id, status FROM orders WHERE id = ? FOR UPDATE',
+      [req.params.id]
+    );
+    if (!order) {
+      await connection.rollback();
+      req.flash('error', 'Không tìm thấy đơn hàng.');
+      return res.redirect('/admin/orders');
+    }
+    if (!['pending', 'confirmed'].includes(order.status)) {
+      await connection.rollback();
+      req.flash('error', 'Chỉ đơn hàng chờ duyệt hoặc đã xác nhận mới được hủy.');
+      return res.redirect('/admin/orders');
+    }
+
+    const [items] = await connection.query(
+      'SELECT product_id, quantity FROM order_items WHERE order_id = ?',
+      [order.id]
+    );
+    for (const item of items) {
+      await connection.query(
+        'UPDATE products SET stock_qty = stock_qty + ? WHERE id = ?',
+        [item.quantity, item.product_id]
+      );
+    }
+    await connection.query(
+      "UPDATE orders SET status = 'cancelled' WHERE id = ?",
+      [order.id]
+    );
+    await connection.commit();
     req.flash('success', 'Đã hủy đơn hàng.');
     res.redirect('/admin/orders');
-  } catch (err) { next(err); }
+  } catch (err) {
+    if (connection) await connection.rollback();
+    next(err);
+  } finally {
+    if (connection) connection.release();
+  }
 });
 
 module.exports = router;

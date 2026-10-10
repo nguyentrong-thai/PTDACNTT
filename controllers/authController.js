@@ -14,24 +14,32 @@ const authController = {
   // ---------- Xử lý đăng ký ----------
   async register(req, res, next) {
     try {
-      const { full_name, email, password, confirm_password, phone, address } = req.body;
+      const full_name = typeof req.body.full_name === 'string' ? req.body.full_name.trim() : '';
+      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      const password = typeof req.body.password === 'string' ? req.body.password : '';
+      const confirm_password = typeof req.body.confirm_password === 'string' ? req.body.confirm_password : '';
+      const phone = typeof req.body.phone === 'string' ? req.body.phone.trim() : '';
+      const address = typeof req.body.address === 'string' ? req.body.address.trim() : '';
 
-      if (!full_name || !email || !password) {
-        req.flash('error', 'Vui lòng nhập đầy đủ họ tên, email và mật khẩu.');
+      if (!full_name || full_name.length > 100 || !/^\S+@\S+\.\S+$/.test(email) || email.length > 150 || !phone || phone.length > 20 || !/^[0-9+()\-\s]{8,20}$/.test(phone) || address.length > 255) {
+        req.flash('error', 'Vui lòng nhập họ tên, email và số điện thoại hợp lệ.');
         return res.redirect('/auth/register');
       }
       if (password !== confirm_password) {
         req.flash('error', 'Mật khẩu nhập lại không khớp.');
         return res.redirect('/auth/register');
       }
-      if (password.length < 6) {
-        req.flash('error', 'Mật khẩu phải có ít nhất 6 ký tự.');
+      if (password.length < 8) {
+        req.flash('error', 'Mật khẩu phải có ít nhất 8 ký tự.');
         return res.redirect('/auth/register');
       }
 
-      const existing = await UserModel.findByEmail(email);
-      if (existing) {
-        req.flash('error', 'Email này đã được đăng ký.');
+      const [existingEmail, existingPhone] = await Promise.all([
+        UserModel.findByEmail(email),
+        UserModel.findByPhone(phone),
+      ]);
+      if (existingEmail || existingPhone) {
+        req.flash('error', existingEmail ? 'Email này đã được đăng ký.' : 'Số điện thoại này đã được sử dụng.');
         return res.redirect('/auth/register');
       }
 
@@ -41,6 +49,10 @@ const authController = {
       req.flash('success', 'Đăng ký thành công! Vui lòng đăng nhập.');
       res.redirect('/auth/login');
     } catch (err) {
+      if (err.code === 'ER_DUP_ENTRY') {
+        req.flash('error', 'Email hoặc số điện thoại đã được sử dụng.');
+        return res.redirect('/auth/register');
+      }
       next(err);
     }
   },
@@ -48,7 +60,12 @@ const authController = {
   // ---------- Xử lý đăng nhập ----------
   async login(req, res, next) {
     try {
-      const { email, password } = req.body;
+      const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+      const password = typeof req.body.password === 'string' ? req.body.password : '';
+      if (!email || !password) {
+        req.flash('error', 'Vui lòng nhập email và mật khẩu.');
+        return res.redirect('/auth/login');
+      }
       const user = await UserModel.findByEmail(email);
 
       if (!user) {

@@ -4,10 +4,10 @@
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <label>Tên sản phẩm<input name="name" value="<%= product.name || '' %>" required></label>
   <label>Danh mục<select name="category_id" required><% categories.forEach((category) => { %><option value="<%= category.id %>" <%= Number(product.category_id) === category.id ? 'selected' : '' %>><%= category.name %></option><% }) %></select></label>
-  <label>Thương hiệu<input name="brand" value="<%= product.brand || '' %>"></label>
+  <label>Nhà sản xuất<input name="brand" value="<%= product.brand || '' %>"></label>
   <label>Mô tả<textarea name="description" rows="4"><%= product.description || '' %></textarea></label>
   <div class="form-row"><label>Giá<input type="number" name="price" min="0" value="<%= product.price || 0 %>" required></label><label>Tồn kho<input type="number" name="stock_qty" min="0" value="<%= product.stock_qty || 0 %>" required></label></div>
-  <label>Ảnh sản phẩm<input type="file" name="image" accept="image/*"><small class="form-help">Tối đa 5 MB. Khi sửa, để trống nếu muốn giữ ảnh hiện tại.</small></label>
+  <label>Ảnh sản phẩm<input type="file" name="image" accept=".jpg,.jpeg,.png,.webp"><small class="form-help">JPG, PNG hoặc WebP, tối đa 5 MB. Khi sửa, để trống nếu muốn giữ ảnh hiện tại.</small></label>
   <label>Đường dẫn ảnh cũ<input name="image_url" value="<%= product.image_url || '' %>" placeholder="Có thể để trống nếu upload ảnh mới"></label>
   <button class="btn btn-primary" type="submit">Lưu sản phẩm</button><a class="cancel-link" href="/admin">Hủy</a>
 </form>

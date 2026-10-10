@@ -6,6 +6,11 @@ const UserModel = {
     return rows[0] || null;
   },
 
+  async findByPhone(phone) {
+    const [rows] = await pool.query('SELECT id FROM users WHERE phone = ?', [phone]);
+    return rows[0] || null;
+  },
+
   async findAuthById(id) {
     const [rows] = await pool.query(
       'SELECT id, full_name, email, password_hash FROM users WHERE id = ?',
@@ -22,11 +27,22 @@ const UserModel = {
     return rows[0] || null;
   },
 
-  async updateProfile(id, { full_name, phone, address, gender, date_of_birth }) {
-    await pool.query(
-      'UPDATE users SET full_name = ?, phone = ?, address = ?, gender = ?, date_of_birth = ? WHERE id = ?',
-      [full_name, phone || null, address || null, gender || null, date_of_birth || null, id]
-    );
+  async updateAccount(id, { full_name, email, phone, address, gender, date_of_birth, password_hash }) {
+    const fields = [
+      'full_name = ?',
+      'email = ?',
+      'phone = ?',
+      'address = ?',
+      'gender = ?',
+      'date_of_birth = ?',
+    ];
+    const values = [full_name, email, phone || null, address || null, gender || null, date_of_birth || null];
+    if (password_hash) {
+      fields.push('password_hash = ?');
+      values.push(password_hash);
+    }
+    values.push(id);
+    await pool.query(`UPDATE users SET ${fields.join(', ')} WHERE id = ?`, values);
   },
 
   async updatePassword(id, password_hash) {
@@ -48,14 +64,14 @@ const UserModel = {
 
   async findEmployees() {
     const [rows] = await pool.query(
-      "SELECT id, full_name, email, phone, address, role, created_at FROM users WHERE role = 'employee' ORDER BY created_at DESC"
+      "SELECT id, full_name, email, phone, address, position, role, created_at FROM users WHERE role = 'employee' ORDER BY created_at DESC"
     );
     return rows;
   },
 
   async findEmployeeById(id) {
     const [rows] = await pool.query(
-      "SELECT id, full_name, email, phone, address, role FROM users WHERE id = ? AND role = 'employee'",
+      "SELECT id, full_name, email, phone, address, position, role FROM users WHERE id = ? AND role = 'employee'",
       [id]
     );
     return rows[0] || null;

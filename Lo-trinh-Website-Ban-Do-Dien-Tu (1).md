@@ -1,244 +1,171 @@
-# LỘ TRÌNH XÂY DỰNG WEBSITE BÁN ĐỒ ĐIỆN TỬ (Bài tập lớn)
+# Lộ trình xây dựng ElectroShop
 
-> Tham khảo: một website bán đồ điện tử dùng Node.js + Express + EJS + MySQL, deploy trên Railway.
+> Tài liệu này mô tả lộ trình và trạng thái dự án theo mã nguồn trong repository. Trạng thái chức năng được đánh dấu theo việc đã có luồng triển khai trong code; điều đó không đồng nghĩa mọi luồng đã được kiểm thử trên production.
 
----
+## 1. Tổng quan dự án
 
-## 1. Phân tích dự án tham khảo
+ElectroShop là website bán đồ điện tử phục vụ đồ án môn học. Ứng dụng render giao diện phía máy chủ, lưu dữ liệu trong MySQL/MariaDB và có ba vai trò `user`, `employee`, `admin`.
 
-Repo tham khảo có cấu trúc MVC khá chuẩn cho một đồ án môn học:
+### Công nghệ hiện dùng
 
-```
-project/
-├── bin/            # entry point khởi động server
-├── config/         # cấu hình DB, session...
-├── controllers/    # xử lý logic nghiệp vụ
-├── models/         # truy vấn/tương tác MySQL
-├── routes/         # định tuyến Express
-├── views/          # giao diện EJS
-├── public/         # css, js, ảnh tĩnh
-├── app.js          # khởi tạo app Express
-├── database.sql    # schema + dữ liệu mẫu MySQL
-├── package.json
-└── railway.toml    # cấu hình deploy Railway
-```
-
-**Công nghệ họ dùng:** HTML/CSS/JS thuần, EJS (server-side render), Node.js/Express, MySQL (quản lý qua Laragon/phpMyAdmin), deploy Railway.
-
-**Tính năng chính:**
-- Người dùng: đăng ký/đăng nhập, xem/tìm sản phẩm, giỏ hàng, đặt & hủy đơn.
-- Quản trị: quản lý danh mục/sản phẩm, đơn hàng, tài khoản nhân viên.
-
-Đây là một baseline tốt — đúng dạng đồ án môn "Thiết kế/Triển khai công nghệ site nghiệp" (TTCSN). Bạn có thể **giữ kiến trúc tương tự** (dễ làm, đúng "khẩu vị" đồ án) hoặc **nâng cấp công nghệ** để điểm cao hơn / học được nhiều hơn. Bên dưới là lộ trình chi tiết, có 2 lựa chọn stack.
-
----
-
-## 2. Lựa chọn công nghệ (stack)
-
-> ✅ **ĐÃ CHỐT: Phương án A** (Node.js + Express + EJS + MySQL/XAMPP). Toàn bộ lộ trình 8 tuần bên dưới áp dụng theo phương án này. Phương án B chỉ giữ lại để tham khảo/so sánh, không triển khai.
-
-### Phương án A — ✅ ĐÃ CHỌN — bám sát repo tham khảo
 | Thành phần | Công nghệ |
 |---|---|
-| Backend | Node.js + Express.js |
-| Template/View | EJS |
-| Database | MySQL/MariaDB — quản lý qua **XAMPP** (Apache + MySQL + phpMyAdmin) |
-| Auth | express-session + bcrypt |
-| Upload ảnh | multer |
-| Deploy | Railway / Render |
+| Backend | Node.js, Express |
+| Giao diện | EJS, HTML, CSS và JavaScript phía trình duyệt |
+| Cơ sở dữ liệu | MySQL/MariaDB, truy vấn bằng `mysql2/promise` |
+| Đăng nhập | `express-session`, `bcrypt`, `connect-flash` |
+| Bảo vệ request | `csurf`, `helmet`, `express-rate-limit` |
+| Tải ảnh | `multer`, `sharp`; ảnh được chuyển sang WebP |
+| Quản lý mã nguồn | Git, GitHub |
+| Triển khai dự kiến/đang hỗ trợ | Railway hoặc Render; cấu hình bằng biến môi trường |
 
-> **Cập nhật:** Nhóm đã chốt dùng **XAMPP** để chạy MySQL cục bộ (thay vì Laragon). Không ảnh hưởng đến code — `db.js` dùng `mysql2/promise` vẫn kết nối bình thường vì XAMPP dùng MariaDB tương thích hoàn toàn với giao thức MySQL. Cấu hình mặc định trong `.env.example` (`DB_HOST=localhost`, `DB_USER=root`, `DB_PASSWORD=` để trống) khớp sẵn với XAMPP.
+Dự án không dùng Next.js, React, Prisma, PostgreSQL, Bootstrap hay cổng thanh toán trực tuyến trong kiến trúc hiện tại. Các công nghệ này không thuộc phạm vi lộ trình triển khai.
 
-**Ưu điểm:** đơn giản, tài liệu dễ tìm, đúng dạng bài giảng viên đã quen chấm.
-**Nhược điểm:** giao diện kém mượt (reload trang liên tục), khó mở rộng.
+## 2. Phạm vi chức năng
 
-### Phương án B — ❌ Không chọn (tham khảo thêm nếu tò mò, không cần đọc để làm đồ án)
-| Thành phần | Công nghệ đề xuất | Lý do thay thế |
-|---|---|---|
-| Frontend | **Next.js 15 (React) + Tailwind CSS** | SPA/SSR kết hợp, UX mượt, dễ làm responsive, được doanh nghiệp dùng nhiều → tốt cho CV |
-| Backend API | **Node.js + Express (hoặc NestJS nếu muốn chuẩn OOP)** hoặc gộp luôn trong Next.js API Routes | Tách API rõ ràng, dễ test |
-| Ngôn ngữ | **TypeScript** thay vì JavaScript thuần | An toàn kiểu dữ liệu, ít bug hơn khi làm nhóm |
-| Database | **PostgreSQL** (hoặc giữ MySQL nếu quen) + **Prisma ORM** | Prisma giúp viết migration, query an toàn, tự sinh types |
-| Auth | **NextAuth.js / Auth.js** hoặc JWT tự viết | Chuẩn hóa, hỗ trợ đăng nhập Google dễ dàng |
-| Thanh toán | **VNPay hoặc Momo sandbox** (thực tế ở VN) thay vì chỉ "đặt hàng nội bộ" | Tăng tính thực tế cho bài bảo vệ đồ án |
-| Ảnh | **Cloudinary** (free tier) thay vì lưu ảnh cục bộ | Ảnh không mất khi redeploy, tối ưu tự động |
-| State FE | React Context / Zustand | Quản lý giỏ hàng mượt không cần reload |
-| Deploy | **Vercel (frontend) + Railway/Render (DB & API)** | Miễn phí, CI/CD tự động khi push GitHub |
-| Testing | Jest (unit) + Playwright (E2E) — nếu môn yêu cầu | Cộng điểm chất lượng phần mềm |
+### Đã có luồng triển khai trong mã nguồn
 
-> **Quyết định cuối cùng của nhóm:** Giữ Phương án A, vì đã code xong Tuần 1-2 (setup, DB, đăng ký/đăng nhập) theo đúng stack này — đổi sang B sẽ phải viết lại từ đầu, không kịp deadline. Từ đây trở đi, toàn bộ lộ trình chỉ triển khai theo Phương án A. Bảng "thay thế công nghệ linh hoạt" ở mục 6 vẫn giữ lại để nâng cấp từng phần nhỏ nếu có thời gian dư, không phải đổi cả hệ thống.
+- Duyệt trang chủ, xem danh sách và chi tiết sản phẩm.
+- Tìm kiếm theo tên/thương hiệu, lọc theo danh mục/thương hiệu và phân trang.
+- Đăng ký, đăng nhập, đăng xuất; mật khẩu được băm bằng bcrypt.
+- Cập nhật hồ sơ và đổi mật khẩu riêng biệt; đổi mật khẩu yêu cầu mật khẩu hiện tại.
+- Quản lý giỏ hàng theo tài khoản; hỗ trợ luồng mua ngay.
+- Checkout, tạo đơn hàng, chụp lại giá tại thời điểm mua và trừ kho trong transaction.
+- Xem danh sách đơn hàng, lọc theo trạng thái, xem chi tiết đơn thuộc tài khoản hiện tại.
+- Khách hủy đơn `pending`; nhân viên/quản trị viên quản lý trạng thái đơn, hủy đơn phù hợp và hoàn kho.
+- Đánh giá sản phẩm sau khi đơn có sản phẩm đó đạt trạng thái `completed`.
+- Danh sách yêu thích theo tài khoản.
+- Trợ lý gợi ý sản phẩm theo từ khóa, danh mục và ngân sách.
+- Admin quản lý sản phẩm, danh mục, nhân viên và xem thống kê.
+- Employee quản lý sản phẩm và đơn hàng; chỉ admin quản lý danh mục và tài khoản nhân viên.
 
----
+### Chưa thuộc phạm vi hoặc chưa triển khai
 
-## 3. Lộ trình theo tuần (đề xuất 8 tuần, điều chỉnh theo deadline thực tế)
+- Thanh toán trực tuyến qua VNPay, MoMo hoặc cổng khác.
+- Gửi email xác nhận đơn hàng.
+- Báo cáo doanh thu/biểu đồ chuyên sâu.
+- Ứng dụng mobile hoặc SPA tách frontend/backend.
+- Thu hồi tự động các phiên đăng nhập khác sau khi đổi mật khẩu.
 
-> **Trạng thái hiện tại (cập nhật):** Các tính năng chính của Tuần 1–6 đã được triển khai. Tuần 7 còn kiểm thử end-to-end và một số hạng mục hoàn thiện; Tuần 8 chưa triển khai.
+## 3. Lộ trình và trạng thái
 
-### Tuần 1 — Phân tích & thiết kế ✅ Đã xong
-- [x] Xác định phạm vi: website bán đồ điện tử (điện thoại, laptop, phụ kiện, đồng hồ thông minh).
-- [x] Thiết kế **ERD** cơ sở dữ liệu (Users, Categories, Products, Cart_items, Orders, Order_items, Reviews) — đã có `schema.sql`.
-- [ ] Vẽ **use-case diagram** (Khách, Khách hàng đã đăng ký, Admin) — *cần bổ sung cho báo cáo*.
-- [ ] Viết đặc tả chức năng (functional spec) — *cần bổ sung cho báo cáo*.
-- [x] Chọn công nghệ: **Phương án A** (Node.js + Express + EJS + MySQL/XAMPP), tạo repo GitHub.
+Quy ước: **Đã triển khai** nghĩa là có xử lý trong mã nguồn; **Cần kiểm thử** nghĩa là vẫn cần kiểm tra nghiệp vụ trên môi trường mục tiêu trước khi nghiệm thu.
 
-### Tuần 2 — Khởi tạo dự án & xác thực người dùng ✅ Đã xong
-- [x] Khởi tạo project Express, cấu trúc thư mục MVC (`config/controllers/models/routes/views/middlewares`).
-- [x] Kết nối database qua `mysql2/promise` (connection pool), có `testConnection()`.
-- [x] Chức năng: Đăng ký, đăng nhập, đăng xuất — `authController.js`, `authRoutes.js`.
-- [x] Phân quyền: middleware `requireLogin` / `requireAdmin` (đã viết, sẽ gắn vào route ở Tuần 3).
-- [x] Mã hóa mật khẩu bằng bcrypt, quản lý phiên bằng `express-session` + `connect-flash`.
-- [x] Layout chung (`header.ejs`/`footer.ejs`), trang chủ hiển thị danh mục + sản phẩm, trang 404.
+### Giai đoạn 1 — Phân tích, thiết kế và khởi tạo
 
-**Việc cần dọn trước khi qua Tuần 3:**
-- [x] Đặt đúng vị trí `public/css/style.css` (đường dẫn `/css/style.css` mà header đang gọi).
-- [x] Có `.env.example` và `.gitignore` đúng vị trí.
-- [x] Sắp đúng cấu trúc `views/partials/`, `views/auth/` theo các lệnh `include()` đã viết.
-- [x] Có tài khoản admin local trong `schema.sql` với mật khẩu đã hash: `admin@electroshop.vn` / `ElectroShop@2026!`.
+- [x] Chốt phạm vi cửa hàng điện tử và nhóm vai trò.
+- [x] Chọn Node.js, Express, EJS và MySQL/MariaDB.
+- [x] Tổ chức mã nguồn theo `config/`, `controllers/`, `middlewares/`, `models/`, `routes/`, `views/`, `public/`, `database/`.
+- [x] Tạo schema và các migration phục vụ cập nhật database hiện hữu.
+- [x] Viết tài liệu đặc tả và lộ trình gắn với chức năng thực tế.
 
-### Tuần 3 — Quản lý sản phẩm & danh mục (phía Admin)
-- [x] CRUD danh mục sản phẩm.
-- [x] CRUD sản phẩm (tên, giá, mô tả, đường dẫn hình ảnh, tồn kho, thương hiệu).
-- [x] Upload ảnh sản phẩm bằng multer (lưu tại `public/images/products/`).
-- [x] Trang quản trị (dashboard) cơ bản.
+### Giai đoạn 2 — Tài khoản và xác thực
 
-### Tuần 4 — Hiển thị sản phẩm & tìm kiếm (phía người dùng)
-- [x] Trang chủ, danh sách sản phẩm, chi tiết sản phẩm.
-- [x] Tìm kiếm theo tên, lọc theo danh mục/thương hiệu.
-- [ ] Phân trang (pagination).
-- [x] Responsive UI bằng CSS responsive.
+- [x] Đăng ký khách hàng với email/số điện thoại duy nhất và mật khẩu tối thiểu 8 ký tự.
+- [x] Đăng nhập chung cho khách hàng, employee và admin; đối chiếu mật khẩu với bcrypt hash trong DB.
+- [x] Đăng xuất và quản lý session.
+- [x] Middleware yêu cầu đăng nhập, nhân viên/quản trị viên và quản trị viên.
+- [x] Cập nhật hồ sơ cá nhân và đổi mật khẩu qua form riêng.
+- [ ] Kiểm thử đăng nhập lại sau đổi mật khẩu trên database/môi trường triển khai thực tế.
 
-### Tuần 5 — Giỏ hàng & đặt hàng
-- [x] Thêm/xóa/sửa số lượng trong giỏ hàng — đã có trong `routes/cartRoutes.js` và `views/cart/index.ejs`.
-- [x] Trang checkout: nhập địa chỉ và số điện thoại giao hàng.
-- [x] Tạo đơn hàng, lưu chi tiết đơn hàng vào DB và trừ tồn kho.
-- [ ] (Phương án B) Tích hợp cổng thanh toán sandbox VNPay/Momo.
+### Giai đoạn 3 — Danh mục và sản phẩm
 
-### Tuần 6 — Quản lý đơn hàng & nghiệp vụ nâng cao
-- [x] Trang "Đơn hàng của tôi" (theo dõi trạng thái, hủy đơn khi chưa xử lý).
-- [x] Admin: xem/xử lý/cập nhật trạng thái đơn hàng (chờ xác nhận → đang giao → hoàn tất/hủy).
-- [ ] Thống kê doanh thu cơ bản (biểu đồ đơn giản — chart.js/recharts).
-- [x] (Tùy chọn) Đánh giá & bình luận sản phẩm (chỉ tài khoản có đơn hoàn tất).
+- [x] CRUD danh mục dành cho admin.
+- [x] CRUD sản phẩm dành cho admin/employee.
+- [x] Tải ảnh sản phẩm có giới hạn dung lượng/định dạng; resize và chuyển WebP.
+- [x] Trang chủ, danh sách, tìm kiếm, lọc, phân trang và chi tiết sản phẩm.
+- [x] Ẩn sản phẩm khỏi cửa hàng bằng trạng thái hoạt động; ngăn xóa sản phẩm đã được đặt mua.
+- [ ] Kiểm tra hiển thị ảnh sau khi deploy và quy trình lưu trữ bền vững nếu nền tảng dùng filesystem tạm.
 
-### Tuần 7 — Hoàn thiện, kiểm thử, bảo mật
-- [ ] Kiểm thử chức năng (test thủ công theo checklist, hoặc viết test tự động nếu có thời gian).
-- [ ] Xử lý lỗi, validate input (chống SQL injection, XSS).
-- [ ] Tối ưu UI/UX, thêm loading state, thông báo (toast).
-- [x] Viết README chi tiết (hướng dẫn cài đặt, cấu hình môi trường, tài khoản admin mẫu, lưu ý khi chạy local).
+### Giai đoạn 4 — Giỏ hàng và đặt hàng
 
-### Tuần 8 — Triển khai (deploy) & viết báo cáo
-- [ ] Deploy production (Railway/Render/Vercel), cấu hình biến môi trường (.env).
-- [ ] Kiểm tra lại toàn bộ luồng trên môi trường thật.
-- [ ] Hoàn thiện báo cáo đồ án (mô tả hệ thống, ERD, sơ đồ kiến trúc, ảnh chụp màn hình, hướng dẫn sử dụng).
-- [ ] Chuẩn bị slide + kịch bản demo bảo vệ.
+- [x] Lưu giỏ hàng thường theo tài khoản trong `cart_items`.
+- [x] Thêm, cập nhật số lượng, xóa dòng giỏ hàng và kiểm tra tồn kho.
+- [x] Mua ngay một sản phẩm mà không thay đổi giỏ hàng thường.
+- [x] Nhập người nhận, địa chỉ, số điện thoại và ghi chú ở checkout.
+- [x] Tạo `orders`/`order_items`, lưu giá tại thời điểm đặt, trừ kho và xóa giỏ hàng trong transaction.
+- [ ] Kiểm thử đồng thời nhiều checkout và các tình huống hết hàng trên MySQL mục tiêu.
 
-> Cập nhật thực tế (26/09/2026): MySQL local kết nối được; trang chủ, đăng nhập admin, danh sách/chi tiết sản phẩm có ảnh và wishlist đã được smoke-test. Hash admin cũ đã được cập nhật; bảng `wishlist_items` bị thiếu trong database cũ đã được tạo an toàn. CSP đã cho phép hai CDN ảnh được seed sử dụng và ảnh lỗi có fallback không dùng inline handler. Các luồng đăng ký, giỏ hàng, checkout và xử lý đơn chưa được xác minh end-to-end.
+### Giai đoạn 5 — Theo dõi và vận hành đơn
 
----
+- [x] Khách xem danh sách đơn, lọc trạng thái, phân trang và mở chi tiết đơn của mình.
+- [x] Khách chỉ hủy đơn `pending`; hệ thống khóa đơn, hoàn kho và cập nhật trạng thái trong transaction.
+- [x] Employee/admin xem danh sách và chi tiết đơn, cập nhật trạng thái theo luồng hợp lệ.
+- [x] Hủy đơn từ giao diện quản trị khi đơn `pending` hoặc `confirmed`, hoàn kho trước khi đổi trạng thái.
+- [ ] Kiểm thử lại các chuyển trạng thái và tình huống hai nhân viên thao tác cùng đơn.
 
-## 4. Cấu trúc thư mục đề xuất
+### Giai đoạn 6 — Tính năng bổ sung
 
-**Nếu theo Phương án A (Express/EJS — giống repo tham khảo):**
-```
-project/
-├── config/
-├── controllers/
-├── models/
-├── routes/
-│   ├── user.routes.js
-│   └── admin.routes.js
-├── middlewares/     # auth check, error handler
-├── views/
-├── public/
-├── database/
-│   └── schema.sql
+- [x] Đánh giá sản phẩm: chỉ khách đã có đơn `completed` chứa sản phẩm được đánh giá.
+- [x] Wishlist được lưu theo tài khoản.
+- [x] Trợ lý gợi ý sản phẩm sử dụng danh mục hiện có, từ khóa và ngân sách.
+- [x] Phân quyền: employee không quản lý nhân viên/danh mục; admin có toàn quyền khu vực quản trị.
+- [ ] Đánh giá trải nghiệm giao diện trên các kích thước màn hình và trình duyệt mục tiêu.
+
+### Giai đoạn 7 — Kiểm thử, bảo mật và nghiệm thu
+
+- [x] Có CSRF cho form, giới hạn tốc độ nhóm route xác thực, Helmet và giới hạn kích thước body.
+- [x] Có kiểm tra đầu vào cho các nghiệp vụ chính và xử lý lỗi tập trung.
+- [ ] Hoàn thành checklist kiểm thử thủ công cho Guest, Customer, Employee, Admin.
+- [ ] Xác minh toàn bộ luồng đặt/hủy đơn và hoàn kho trên bản sao database kiểm thử.
+- [ ] Chụp ảnh giao diện, hoàn thiện báo cáo và chuẩn bị kịch bản demo.
+
+### Giai đoạn 8 — Triển khai
+
+- [ ] Cấu hình biến môi trường và database riêng cho staging/production.
+- [ ] Chạy schema/migration theo thứ tự, sao lưu trước khi cập nhật database đang có dữ liệu.
+- [ ] Deploy lên Railway hoặc Render; kiểm tra URL, HTTPS, cookie secure, upload ảnh và kết nối database.
+- [ ] Smoke-test đăng ký/đăng nhập, đổi mật khẩu, mua hàng, theo dõi/hủy đơn và quyền employee/admin trên môi trường đã deploy.
+
+## 4. Cấu trúc mã nguồn hiện tại
+
+```text
+.
 ├── app.js
-└── .env
+├── config/                 # Kết nối MySQL
+├── controllers/            # Xác thực và xử lý nghiệp vụ
+├── middlewares/            # Đăng nhập, phân quyền
+├── models/                 # Truy vấn dữ liệu
+├── routes/                 # Route theo tính năng
+├── views/                  # Giao diện EJS
+├── public/                 # CSS, JavaScript, hình ảnh
+├── database/
+│   ├── schema.sql
+│   └── migration-*.sql
+├── package.json
+└── README.md
 ```
 
-**Nếu theo Phương án B (Next.js + TypeScript + Prisma):**
-```
-project/
-├── app/                # Next.js App Router
-│   ├── (shop)/
-│   ├── (admin)/
-│   └── api/
-├── components/
-├── lib/                # prisma client, auth config, utils
-├── prisma/
-│   └── schema.prisma
-├── public/
-├── styles/
-└── .env
-```
+## 5. Các bảng dữ liệu trọng tâm
 
----
+- `users`: thông tin tài khoản, `password_hash`, `role` và `position`.
+- `categories`, `products`: danh mục, sản phẩm, giá, tồn kho, ảnh và trạng thái hoạt động.
+- `cart_items`: giỏ hàng bền vững theo tài khoản.
+- `orders`, `order_items`: đơn hàng và các dòng sản phẩm cùng giá tại thời điểm mua.
+- `reviews`: đánh giá, duy nhất theo cặp khách hàng/sản phẩm.
+- `wishlist_items`: sản phẩm yêu thích, duy nhất theo cặp khách hàng/sản phẩm.
 
-## 5. Checklist tính năng tối thiểu để "đạt yêu cầu" đồ án
+Chi tiết kiểu dữ liệu và khóa ngoại được định nghĩa trong `database/schema.sql`. Khi dùng database cũ, cần xác định migration còn thiếu và xử lý dữ liệu trùng trước migration tạo unique index số điện thoại.
 
-- [x] Đăng ký/đăng nhập/phân quyền
-- [x] CRUD sản phẩm + danh mục (Admin)
-- [x] Xem, tìm kiếm, lọc sản phẩm (User)
-- [x] Giỏ hàng, đặt hàng, hủy đơn
-- [x] Quản lý đơn hàng (Admin)
-- [x] Responsive, giao diện rõ ràng
-- [ ] README + báo cáo đầy đủ
-- [ ] Video/slide demo
+## 6. Chạy dự án local
 
-> Cập nhật thực tế: README đã được viết rõ ràng; báo cáo, slide và video demo còn cần hoàn thiện theo đúng deadline.
+1. Cài Node.js và MySQL/MariaDB; tạo database `electro_shop`.
+2. Import `database/schema.sql` vào database mới. Với database đã tồn tại, đối chiếu các file `database/migration-*.sql` trước khi chạy; không chạy lặp migration nếu chưa kiểm tra.
+3. Tạo `.env` từ `.env.example`; điền thông tin DB, `PORT` nếu cần và `SESSION_SECRET` đủ mạnh. Không đưa `.env` lên Git.
+4. Cài dependency và chạy:
 
-> Cập nhật thực tế: README đã được viết rõ ràng; báo cáo, slide và video demo còn cần hoàn thiện theo đúng deadline.
+   ```bash
+   npm install
+   npm run dev
+   ```
 
-**Điểm cộng (nếu còn thời gian):**
-- [ ] Thanh toán online (VNPay/Momo sandbox)
-- [x] Đánh giá/bình luận sản phẩm
-- [x] Chatbot tư vấn/gợi ý sản phẩm đơn giản (theo catalog, từ khóa và ngân sách)
-- [ ] Thống kê doanh thu dạng biểu đồ
-- [ ] Gửi email xác nhận đơn hàng (Nodemailer)
-- [x] Wishlist (sản phẩm yêu thích, lưu theo tài khoản)
+5. Mở `http://localhost:3000`. Tài khoản seed nếu được dùng phải lấy từ cấu hình/database local và đổi mật khẩu trước khi triển khai.
 
----
+## 7. Tiêu chí hoàn thành
 
-## 6. Ghi chú thay thế công nghệ linh hoạt
-
-Bảng dưới liệt kê các điểm có thể "nâng cấp" độc lập từng phần mà không phải đổi cả hệ thống — bạn có thể áp dụng dần trong lúc làm nếu thấy phù hợp hơn:
-
-| Nếu đang dùng | Có thể thay bằng | Khi nào nên đổi |
-|---|---|---|
-| EJS render server-side | React/Next.js | Khi cần UI động, không muốn reload trang khi thêm giỏ hàng |
-| Lưu ảnh trong `/public` | Cloudinary/S3 | Khi deploy lên Railway/Render (ổ đĩa có thể bị xóa mỗi lần redeploy) |
-| Session cookie | JWT | Khi tách frontend/backend riêng (API-first) |
-| mysql2 thuần (viết SQL tay) | Sequelize/Prisma ORM | Khi DB có nhiều bảng quan hệ, muốn tránh lỗi cú pháp SQL |
-| CSS thuần | Tailwind CSS / Bootstrap 5 | Khi cần làm giao diện nhanh, đẹp, responsive |
-| Không có thanh toán thật | VNPay/Momo sandbox | Khi muốn đồ án "thực tế" hơn để gây ấn tượng khi bảo vệ |
-
----
-
-## 7. Công cụ cần cài đặt (đã chốt dùng XAMPP)
-
-| Công cụ | Mục đích |
-|---|---|
-| **Node.js (>=18.x LTS)** | Chạy backend Express |
-| **XAMPP** | Apache + MySQL (MariaDB) + phpMyAdmin — quản lý CSDL |
-| **Git** | Quản lý version, đẩy code lên GitHub |
-| **VS Code** | Viết code (nên cài thêm extension: EJS, ESLint, Prettier, DotENV) |
-| **Thunder Client / Postman** | Test các route POST (đăng ký, đăng nhập...) độc lập với giao diện |
-| **DBeaver / MySQL Workbench** (tùy chọn) | Xem/query DB trực quan hơn phpMyAdmin nếu cần |
-
-**Quy trình chạy project với XAMPP:**
-1. Mở XAMPP Control Panel → Start `Apache` và `MySQL`.
-2. Vào `http://localhost/phpmyadmin` → tạo database `electro_shop` → tab Import → chọn `schema.sql`.
-3. `cp .env.example .env` (giữ nguyên cấu hình mặc định, khớp sẵn với XAMPP: `DB_HOST=localhost`, `DB_USER=root`, `DB_PASSWORD=` để trống).
-4. `npm install` → `npm run dev` → truy cập `http://localhost:3000`.
-
----
-
-## 8. Tài liệu & tham khảo nên đọc thêm
-- Tham khảo thêm các repo MVC Express/EJS/MySQL để hoàn thiện cấu trúc.
-- Prisma docs: https://www.prisma.io/docs
-- Next.js docs: https://nextjs.org/docs
-- VNPay sandbox docs (cổng thanh toán demo cho sinh viên VN): tìm "VNPay Merchant Sandbox"
-- Tailwind CSS docs: https://tailwindcss.com/docs
-
----
-
-*File này là lộ trình gợi ý — hãy điều chỉnh số tuần/tính năng theo deadline và yêu cầu cụ thể của giảng viên/đề cương môn học.*
+- Các chức năng đã triển khai hoạt động đúng theo vai trò.
+- Luồng đổi mật khẩu lưu hash mới vào `users.password_hash`; mật khẩu cũ bị từ chối khi đăng nhập mới.
+- Tồn kho nhất quán sau đặt hàng/hủy đơn; lỗi giữa transaction không để lại dữ liệu nửa chừng.
+- Khách không truy cập được chi tiết đơn của tài khoản khác.
+- Employee không truy cập chức năng quản lý danh mục/nhân viên.
+- Hướng dẫn cài đặt, schema/migration và báo cáo phản ánh đúng phiên bản được nghiệm thu.

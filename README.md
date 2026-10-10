@@ -166,6 +166,8 @@ SESSION_SECRET=your_secret_key_here
 - Khởi động Apache và MySQL
 - Import file `database/schema.sql` vào database `electro_shop`
 
+Nếu đang dùng database cũ, chạy thêm các migration cần thiết trong thư mục `database/`. Với thay đổi use case hiện tại, chạy `migration-account-cart.sql`, `migration-employee-position.sql` và `migration-unique-user-phone.sql`; migration số điện thoại yêu cầu xử lý các số trùng trước khi tạo unique index.
+
 ### Bước 5: Chạy ứng dụng
 
 ```bash

@@ -5,9 +5,10 @@
   <label>Họ và tên<input name="full_name" value="<%= employee.full_name || '' %>" maxlength="100" autocomplete="name" required></label>
   <label>Email<input type="email" name="email" value="<%= employee.email || '' %>" maxlength="150" autocomplete="email" required></label>
   <div class="form-row"><label>Giới tính<select name="gender"><option value="">Chưa chọn</option><option value="male" <%= employee.gender === 'male' ? 'selected' : '' %>>Nam</option><option value="female" <%= employee.gender === 'female' ? 'selected' : '' %>>Nữ</option><option value="other" <%= employee.gender === 'other' ? 'selected' : '' %>>Khác</option></select></label><label>Ngày sinh<input type="date" name="date_of_birth" value="<%= employee.date_of_birth ? new Date(employee.date_of_birth).toISOString().slice(0, 10) : '' %>"></label></div>
-  <label>Số điện thoại<input type="tel" name="phone" value="<%= employee.phone || '' %>" maxlength="20" autocomplete="tel"></label>
+  <label>Số điện thoại<input type="tel" name="phone" value="<%= employee.phone || '' %>" maxlength="20" pattern="[0-9+()\s-]{8,20}" autocomplete="tel" required></label>
+  <label>Chức vụ<input name="position" value="<%= employee.position || '' %>" maxlength="100" required></label>
   <label>Địa chỉ<input name="address" value="<%= employee.address || '' %>" maxlength="255" autocomplete="street-address"></label>
-  <label>Mật khẩu<% if (employee.id) { %><small class="form-help">Để trống nếu không muốn đổi mật khẩu.</small><% } %><input type="password" name="password" minlength="6" autocomplete="new-password" <%= employee.id ? '' : 'required' %>></label>
+  <label>Mật khẩu<% if (employee.id) { %><small class="form-help">Để trống nếu không muốn đổi mật khẩu.</small><% } %><input type="password" name="password" minlength="8" autocomplete="new-password" <%= employee.id ? '' : 'required' %>></label>
   <button class="btn btn-primary" type="submit"><%= employee.id ? 'Lưu thay đổi' : 'Thêm nhân viên' %></button>
   <a class="cancel-link" href="/admin/users">Hủy</a>
 </form>

@@ -8,7 +8,7 @@
     <input class="auth-control" id="register-name" type="text" name="full_name" placeholder="Họ và tên" autocomplete="name" required>
 
     <label class="visually-hidden" for="register-phone">Số điện thoại</label>
-    <input class="auth-control" id="register-phone" type="tel" name="phone" placeholder="Số điện thoại" autocomplete="tel">
+    <input class="auth-control" id="register-phone" type="tel" name="phone" placeholder="Số điện thoại" autocomplete="tel" maxlength="20" pattern="[0-9+()\s-]{8,20}" required>
 
     <label class="visually-hidden" for="register-email">Email</label>
     <input class="auth-control" id="register-email" type="email" name="email" placeholder="Email" autocomplete="email" required>
@@ -18,7 +18,7 @@
 
     <div class="auth-password-field">
       <label class="visually-hidden" for="register-password">Mật khẩu</label>
-      <input class="auth-control" id="register-password" type="password" name="password" placeholder="Mật khẩu" autocomplete="new-password" required minlength="6">
+      <input class="auth-control" id="register-password" type="password" name="password" placeholder="Mật khẩu" autocomplete="new-password" required minlength="8">
       <button class="auth-password-toggle" type="button" data-password-toggle aria-label="Hiện mật khẩu" aria-controls="register-password">
         <i class="far fa-eye" aria-hidden="true"></i>
       </button>
@@ -26,7 +26,7 @@
 
     <div class="auth-password-field">
       <label class="visually-hidden" for="register-confirm-password">Nhập lại mật khẩu</label>
-      <input class="auth-control" id="register-confirm-password" type="password" name="confirm_password" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required minlength="6">
+      <input class="auth-control" id="register-confirm-password" type="password" name="confirm_password" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required minlength="8">
       <button class="auth-password-toggle" type="button" data-password-toggle aria-label="Hiện mật khẩu" aria-controls="register-confirm-password">
         <i class="far fa-eye" aria-hidden="true"></i>
       </button>

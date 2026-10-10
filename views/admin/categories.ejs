@@ -2,9 +2,9 @@
 <section class="page-heading"><p class="eyebrow">QUẢN TRỊ DANH MỤC</p><h1>Danh mục sản phẩm</h1></section>
 <form class="admin-form compact-form" method="post" action="/admin/categories">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
-  <div class="form-row"><label>Tên danh mục<input name="name" required></label><label>Slug<input name="slug" placeholder="dien-thoai" required></label></div>
+  <div class="form-row"><label>Tên danh mục<input name="name" required></label><label>Slug<input name="slug" placeholder="Tự tạo từ tên danh mục"></label></div>
   <label>Mô tả<input name="description"></label>
   <button class="btn btn-primary" type="submit">Thêm danh mục</button>
 </form>
-<div class="admin-table"><% categories.forEach((category) => { %><div class="table-row"><div><strong><%= category.name %></strong><small><%= category.slug %> · <%= category.description || 'Chưa có mô tả' %></small></div><div><a class="text-button" href="/admin/categories/<%= category.id %>/edit">Sửa</a><form class="inline-form" method="post" action="/admin/categories/<%= category.id %>/delete"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="text-button" type="submit">Xóa</button></form></div></div><% }) %></div>
+<div class="admin-table"><% categories.forEach((category) => { %><div class="table-row"><div><strong><%= category.name %></strong><small><%= category.slug %> · <%= category.description || 'Chưa có mô tả' %></small></div><div><a class="text-button" href="/admin/categories/<%= category.id %>/edit">Sửa</a><form class="inline-form" method="post" action="/admin/categories/<%= category.id %>/delete" onsubmit="return confirm('Bạn có chắc chắn muốn xóa danh mục này?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="text-button" type="submit">Xóa</button></form></div></div><% }) %></div>
 <%- include('../partials/footer') %>

@@ -9,8 +9,7 @@
 <form class="profile-form" action="/profile" method="post">
   <input type="hidden" name="_csrf" value="<%= csrfToken %>">
   <label>Họ và tên<input name="full_name" value="<%= user.full_name || '' %>" maxlength="100" autocomplete="name" required></label>
-  <label>Email<input value="<%= user.email %>" readonly aria-describedby="profile-email-note"></label>
-  <small id="profile-email-note" class="profile-note">Email không thể thay đổi tại đây.</small>
+  <label>Email<input type="email" name="email" value="<%= user.email %>" maxlength="150" autocomplete="email" required></label>
   <div class="form-row">
     <label>Số điện thoại<input type="tel" name="phone" value="<%= user.phone || '' %>" maxlength="20" autocomplete="tel"></label>
     <label>Giới tính<select name="gender"><option value="">Chưa chọn</option><option value="male" <%= user.gender === 'male' ? 'selected' : '' %>>Nam</option><option value="female" <%= user.gender === 'female' ? 'selected' : '' %>>Nữ</option><option value="other" <%= user.gender === 'other' ? 'selected' : '' %>>Khác</option></select></label>
