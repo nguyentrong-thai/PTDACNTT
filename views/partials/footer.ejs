@@ -21,7 +21,7 @@
       <p class="market-copyright">&copy; <%= new Date().getFullYear() %> Group 12</p>
     </div>
   </footer>
-  <% if (!(typeof authPage !== 'undefined' && authPage)) { %>
+  <% if (!(typeof authPage !== 'undefined' && authPage) && !(typeof isAdminPage !== 'undefined' && isAdminPage)) { %>
     <%- include('assistant-widget') %>
     <script src="/js/assistant.js" defer></script>
   <% } %>
