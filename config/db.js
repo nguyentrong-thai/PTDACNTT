@@ -1,27 +1,27 @@
 const mysql = require('mysql2/promise');
 require('dotenv').config();
 
-// Tạo connection pool - dùng chung cho toàn bộ app, tránh mở/đóng kết nối liên tục
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  port: process.env.DB_PORT || 3306,
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'electro_shop',
+const connectionUrl = process.env.DATABASE_URL || process.env.MYSQL_URL;
+const connectionOptions = connectionUrl || {
+  host: process.env.DB_HOST || process.env.MYSQLHOST || 'localhost',
+  port: Number(process.env.DB_PORT || process.env.MYSQLPORT || 3306),
+  user: process.env.DB_USER || process.env.MYSQLUSER || 'root',
+  password: process.env.DB_PASSWORD || process.env.MYSQLPASSWORD || '',
+  database: process.env.DB_NAME || process.env.MYSQLDATABASE || 'electro_shop',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
-});
+};
 
-// Kiểm tra kết nối khi khởi động server
+const pool = mysql.createPool(connectionOptions);
+
 async function testConnection() {
+  const conn = await pool.getConnection();
   try {
-    const conn = await pool.getConnection();
-    console.log('✅ Kết nối MySQL thành công (database: %s)', process.env.DB_NAME);
+    await conn.query('SELECT 1');
+    console.log('Kết nối MySQL thành công.');
+  } finally {
     conn.release();
-  } catch (err) {
-    console.error('❌ Lỗi kết nối MySQL:', err.message);
-    console.error('   Kiểm tra lại: MySQL đã chạy chưa? Thông tin trong file .env đã đúng chưa?');
   }
 }
 

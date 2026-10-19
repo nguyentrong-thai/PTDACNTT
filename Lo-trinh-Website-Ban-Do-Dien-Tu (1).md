@@ -75,7 +75,7 @@ Quy ước: **Đã triển khai** nghĩa là có xử lý trong mã nguồn; **C
 - [x] Tải ảnh sản phẩm có giới hạn dung lượng/định dạng; resize và chuyển WebP.
 - [x] Trang chủ, danh sách, tìm kiếm, lọc, phân trang và chi tiết sản phẩm.
 - [x] Ẩn sản phẩm khỏi cửa hàng bằng trạng thái hoạt động; ngăn xóa sản phẩm đã được đặt mua.
-- [ ] Kiểm tra hiển thị ảnh sau khi deploy và quy trình lưu trữ bền vững nếu nền tảng dùng filesystem tạm.
+- [x] Cấu hình `UPLOAD_DIR` để Railway có thể lưu ảnh trên persistent volume; vẫn cần xác minh sau khi gắn volume và deploy.
 
 ### Giai đoạn 4 — Giỏ hàng và đặt hàng
 
@@ -150,7 +150,7 @@ Chi tiết kiểu dữ liệu và khóa ngoại được định nghĩa trong `d
 ## 6. Chạy dự án local
 
 1. Cài Node.js và MySQL/MariaDB; tạo database `electro_shop`.
-2. Import `database/schema.sql` vào database mới. Với database đã tồn tại, đối chiếu các file `database/migration-*.sql` trước khi chạy; không chạy lặp migration nếu chưa kiểm tra.
+2. Tạo/chọn database đích rồi import `database/schema.sql` vào database đó. Schema không tự tạo/chuyển database. Với database đã tồn tại, đối chiếu các file `database/migration-*.sql` trước khi chạy; không chạy lặp migration nếu chưa kiểm tra.
 3. Tạo `.env` từ `.env.example`; điền thông tin DB, `PORT` nếu cần và `SESSION_SECRET` đủ mạnh. Không đưa `.env` lên Git.
 4. Cài dependency và chạy:
 

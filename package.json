@@ -5,7 +5,9 @@
   "main": "app.js",
   "scripts": {
     "start": "node app.js",
-    "dev": "nodemon app.js"
+    "dev": "nodemon app.js",
+    "test": "node --test",
+    "admin:create": "node database/create-admin.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",
@@ -14,6 +16,7 @@
     "dotenv": "^16.4.5",
     "ejs": "^3.1.10",
     "express": "^4.19.2",
+    "express-mysql-session": "^3.0.3",
     "express-rate-limit": "^8.7.0",
     "express-session": "^1.18.0",
     "express-validator": "^7.1.0",
@@ -21,10 +24,14 @@
     "method-override": "^3.0.0",
     "morgan": "^1.10.0",
     "multer": "^1.4.5-lts.1",
-    "mysql2": "^3.10.1",
-    "sharp": "^0.35.4"
+    "mysql2": "^3.24.6",
+    "sharp": "^0.35.5"
   },
   "devDependencies": {
     "nodemon": "^3.1.4"
+  },
+  "overrides": {
+    "cookie": "^0.7.2",
+    "mysql2": "$mysql2"
   }
 }

@@ -6,6 +6,9 @@ const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const { pool } = require('../config/db');
 const { requireStaff, requireAdmin } = require('../middlewares/authMiddleware');
+const { isValidPassword } = require('../utils/passwordPolicy');
+const { getAllowedOrderTransitions, isAllowedOrderTransition } = require('../utils/orderStatus');
+const uploadDirectory = require('../config/uploadStorage');
 
 const router = express.Router();
 router.use(requireStaff);
@@ -16,8 +19,6 @@ function getPage(value, limit) {
   return { page, limit, offset: (page - 1) * limit };
 }
 
-const uploadDirectory = path.join(__dirname, '..', 'public', 'images', 'products');
-fs.mkdirSync(uploadDirectory, { recursive: true });
 const upload = multer({
   storage: multer.memoryStorage(),
   limits: { fileSize: 5 * 1024 * 1024 },
@@ -97,8 +98,8 @@ function getEmployeeInput({ full_name, email, phone, address, gender, date_of_bi
     const parsedDate = new Date(`${date_of_birth}T00:00:00Z`);
     if (!/^\d{4}-\d{2}-\d{2}$/.test(date_of_birth) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date_of_birth) return null;
   }
-  if (requirePassword && (typeof password !== 'string' || password.length < 8)) return null;
-  if (!requirePassword && password && password.length < 8) return null;
+  if (requirePassword && !isValidPassword(password)) return null;
+  if (!requirePassword && password && !isValidPassword(password)) return null;
   return {
     fullName: full_name.trim(),
     email: email.trim().toLowerCase(),
@@ -112,13 +113,6 @@ function getEmployeeInput({ full_name, email, phone, address, gender, date_of_bi
 }
 
 async function updateOrderStatus(orderId, status) {
-  const allowedTransitions = {
-    pending: ['confirmed', 'cancelled'],
-    confirmed: ['shipping', 'cancelled'],
-    shipping: ['completed'],
-    completed: [],
-    cancelled: [],
-  };
   let connection;
   try {
     connection = await pool.getConnection();
@@ -128,7 +122,7 @@ async function updateOrderStatus(orderId, status) {
       await connection.rollback();
       return 'not_found';
     }
-    if (order.status !== status && !allowedTransitions[order.status].includes(status)) {
+    if (!isAllowedOrderTransition(order.status, status)) {
       await connection.rollback();
       return 'invalid_transition';
     }
@@ -419,6 +413,9 @@ router.get('/orders', async (req, res, next) => {
     const [orders] = await pool.query(
       `SELECT o.*, u.full_name, u.email FROM orders o JOIN users u ON u.id = o.user_id ORDER BY o.created_at DESC LIMIT ? OFFSET ?`, [limit, (currentPage - 1) * limit]
     );
+    orders.forEach((order) => {
+      order.allowedTransitions = getAllowedOrderTransitions(order.status);
+    });
     res.render('admin/orders', { title: 'Quản lý đơn hàng', orders, pagination: { currentPage, totalPages, total, path: '/admin/orders', query: {} } });
   } catch (err) { next(err); }
 });

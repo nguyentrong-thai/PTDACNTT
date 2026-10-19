@@ -2,6 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const session = require('express-session');
+const MySQLStore = require('express-mysql-session')(session);
 const flash = require('connect-flash');
 const morgan = require('morgan');
 const methodOverride = require('method-override');
@@ -9,10 +10,11 @@ const helmet = require('helmet');
 const csrf = require('csurf');
 const { rateLimit } = require('express-rate-limit');
 
-const { testConnection } = require('./config/db');
+const { pool, testConnection } = require('./config/db');
 const indexRoutes = require('./routes/index');
 const profileRoutes = require('./routes/profileRoutes');
 const CartModel = require('./models/cartModel');
+const uploadDirectory = require('./config/uploadStorage');
 
 const app = express();
 const sessionSecret = process.env.SESSION_SECRET;
@@ -20,10 +22,14 @@ const sessionSecret = process.env.SESSION_SECRET;
 if (!sessionSecret) {
   throw new Error('SESSION_SECRET is required. Copy .env.example to .env and set a strong value.');
 }
+if (sessionSecret.length < 32) {
+  throw new Error('SESSION_SECRET must contain at least 32 characters.');
+}
 
 // ---------- View engine ----------
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+if (process.env.NODE_ENV === 'production') app.set('trust proxy', 1);
 
 // ---------- Middlewares ----------
 app.use(morgan('dev'));
@@ -38,9 +44,16 @@ app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(express.json({ limit: '100kb' }));
 app.use(methodOverride('_method'));
 app.use(express.static(path.join(__dirname, 'public')));
+app.use('/images/products', express.static(uploadDirectory));
+
+const sessionStore = new MySQLStore({
+  expiration: 1000 * 60 * 60 * 24 * 30,
+  clearExpired: true,
+}, pool);
 
 app.use(session({
   secret: sessionSecret,
+  store: sessionStore,
   resave: false,
   saveUninitialized: false,
   cookie: {
@@ -52,6 +65,8 @@ app.use(session({
 }));
 app.use(flash());
 app.use(csrf());
+
+app.get('/healthz', (req, res) => res.status(200).send('ok'));
 
 const authLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
@@ -105,9 +120,23 @@ app.use((err, req, res, next) => {
   res.status(500).send('Đã xảy ra lỗi máy chủ. Vui lòng thử lại sau.');
 });
 
-// ---------- Khởi động server ----------
-const PORT = process.env.PORT || 3000;
-app.listen(PORT, async () => {
-  console.log(`🚀 Server đang chạy tại http://localhost:${PORT}`);
+async function start() {
   await testConnection();
-});
+  await sessionStore.onReady();
+
+  const port = Number(process.env.PORT || 3000);
+  const server = app.listen(port, () => {
+    console.log(`Server đang chạy tại cổng ${port}.`);
+  });
+
+  return server;
+}
+
+if (require.main === module) {
+  start().catch((error) => {
+    console.error('Không thể khởi động ứng dụng:', error);
+    process.exit(1);
+  });
+}
+
+module.exports = { app, start };

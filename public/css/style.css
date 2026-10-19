@@ -240,3 +240,7 @@ body.auth-page .site-header,body.auth-page .site-footer { display:none; }
 @media (max-width:700px) { .assistant-widget { right:14px; bottom:14px; } .review-form { grid-template-columns:1fr; } .review-form .btn { justify-self:start; } .reviews-heading { align-items:flex-start; flex-direction:column; gap:8px; } }
 @media (prefers-reduced-motion:reduce) { .assistant-toggle,.assistant-recommendation { transition:none; } }
 @media (max-width:520px) { .add-form { align-items:stretch; flex-direction:column; } .product-actions { display:grid; grid-template-columns:1fr 1fr; } .product-actions .btn { padding:12px 8px; font-size:.78rem; } }
+.order-actions { display:flex; align-items:center; justify-content:flex-end; flex-wrap:wrap; gap:10px; }
+.order-actions > form { display:flex; align-items:center; gap:8px; }
+.order-actions select { max-width:210px; }
+@media (max-width:700px) { .order-row { align-items:flex-start; flex-direction:column; } .order-actions { justify-content:flex-start; } }
