@@ -21,8 +21,15 @@
       </nav>
     </aside>
     <div class="admin-topbar">
-      <div class="admin-topbar-search"><span aria-hidden="true">⌕</span><input type="search" placeholder="Tìm kiếm"></div>
-      <span class="admin-topbar-user"><%= currentUser.full_name %></span>
+      <details class="admin-account-menu">
+        <summary class="admin-topbar-user">
+          <%= currentUser.role === 'admin' ? 'Quản trị viên' : 'Nhân viên' %>
+        </summary>
+        <form class="admin-topbar-logout" method="post" action="/auth/logout">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" data-confirm-logout>Đăng xuất</button>
+        </form>
+      </details>
     </div>
   <% } %>
   <header class="site-header">

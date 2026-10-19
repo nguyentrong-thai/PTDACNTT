@@ -24,11 +24,15 @@ body.admin-page main.container { max-width:none; min-height:100vh; margin-left:2
 .admin-side-nav nav { display:block; width:100%; }
 .admin-side-nav nav a { display:block; padding:16px; color:#fff; font-size:13px; white-space:nowrap; }
 .admin-side-nav nav a:hover, .admin-side-nav nav a.is-active { width:100%; background:#fff; color:#b52824; border-radius:0; }
-.admin-topbar { position:fixed; top:0; right:0; left:220px; z-index:20; height:58px; display:flex; align-items:center; justify-content:center; background:#f4f5f8; }
-.admin-topbar-search { position:relative; width:240px; }
-.admin-topbar-search span { position:absolute; left:10px; top:4px; font-size:18px; }
-.admin-topbar-search input { width:100%; height:30px; border:1px solid #999; border-radius:16px; background:#fff; padding:0 12px 0 30px; font-size:12px; }
-.admin-topbar-user { position:absolute; right:30px; color:#555; font-size:12px; }
+.admin-topbar { position:fixed; top:0; right:0; left:220px; z-index:20; height:58px; display:flex; align-items:center; justify-content:flex-end; gap:18px; padding:0 30px; background:#f4f5f8; }
+.admin-account-menu { position:relative; }
+.admin-topbar-user { color:#555; cursor:pointer; font-size:12px; list-style:none; }
+.admin-topbar-user::-webkit-details-marker { display:none; }
+.admin-topbar-user::after { content:' ▾'; }
+.admin-topbar-user span { margin-left:6px; color:#777; }
+.admin-topbar-logout { position:absolute; top:calc(100% + 12px); right:0; min-width:140px; padding:6px; border:1px solid var(--line); border-radius:6px; background:#fff; box-shadow:0 6px 18px #17212520; }
+.admin-topbar-logout button { width:100%; border:0; border-radius:4px; background:#b52824; color:#fff; cursor:pointer; padding:8px 14px; font:inherit; font-size:12px; text-align:left; }
+.admin-topbar-logout button:hover { background:#92201d; }
 body.admin-page .page-heading { padding:0 0 26px; }
 body.admin-page .page-heading h1 { font-size:32px; line-height:1.2; letter-spacing:0; margin:8px 0; }
 body.admin-page .page-heading .eyebrow { font-size:11px; }
@@ -41,7 +45,7 @@ body.admin-page .admin-actions { margin-bottom:20px; }
 .admin-inline-search input { min-width:220px; height:42px; border-radius:4px; }
 .employee-admin-table .employee-row { align-items:center; }
 .employee-admin-table .employee-row small { max-width:760px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-@media (max-width:700px) { body.admin-page main.container { margin-left:150px; padding:78px 14px 50px; } .admin-side-nav { width:150px; } .admin-side-brand { font-size:11px; padding-left:10px; } .admin-side-nav nav a { font-size:11px; padding:13px 10px; } .admin-topbar { left:150px; } .admin-topbar-user { display:none; } }
+@media (max-width:700px) { body.admin-page main.container { margin-left:150px; padding:78px 14px 50px; } .admin-side-nav { width:150px; } .admin-side-brand { font-size:11px; padding-left:10px; } .admin-side-nav nav a { font-size:11px; padding:13px 10px; } .admin-topbar { left:150px; padding:0 14px; } .admin-topbar-user span { display:none; } }
 
 body { font-family:'Roboto',sans-serif; }
 .pagination { display:flex; justify-content:center; gap:6px; margin:24px 0 8px; }
