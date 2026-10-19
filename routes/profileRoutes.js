@@ -2,6 +2,7 @@ const express = require('express');
 const bcrypt = require('bcrypt');
 const UserModel = require('../models/userModel');
 const { requireLogin } = require('../middlewares/authMiddleware');
+const { isValidPassword } = require('../utils/passwordPolicy');
 
 const router = express.Router();
 router.use(requireLogin);
@@ -14,8 +15,8 @@ function getProfileInput(body = {}) {
   const gender = typeof body.gender === 'string' ? body.gender : '';
   const dateOfBirth = typeof body.date_of_birth === 'string' ? body.date_of_birth : '';
 
-  if (!fullName || fullName.length > 100 || phone.length > 20 || address.length > 255) return null;
-  if (phone && !/^[0-9+()\-\s]{8,20}$/.test(phone)) return null;
+  if (!fullName || fullName.length > 100 || !phone || phone.length > 20 || address.length > 255) return null;
+  if (!/^[0-9+()\-\s]{8,20}$/.test(phone)) return null;
   if (!/^\S+@\S+\.\S+$/.test(email) || email.length > 150) return null;
   if (gender && !['male', 'female', 'other'].includes(gender)) return null;
   if (dateOfBirth) {
@@ -43,8 +44,8 @@ router.post('/password', async (req, res, next) => {
       req.flash('error', 'Vui lòng nhập đầy đủ các trường mật khẩu.');
       return res.redirect('/profile');
     }
-    if (newPassword.length < 6) {
-      req.flash('error', 'Mật khẩu mới phải có ít nhất 6 ký tự.');
+    if (!isValidPassword(newPassword)) {
+      req.flash('error', 'Mật khẩu mới phải có ít nhất 8 ký tự.');
       return res.redirect('/profile');
     }
     if (newPassword !== confirmPassword) {

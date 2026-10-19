@@ -1,5 +1,6 @@
 const bcrypt = require('bcrypt');
 const UserModel = require('../models/userModel');
+const { isValidPassword } = require('../utils/passwordPolicy');
 
 const authController = {
   // ---------- Hiển thị form ----------
@@ -29,7 +30,7 @@ const authController = {
         req.flash('error', 'Mật khẩu nhập lại không khớp.');
         return res.redirect('/auth/register');
       }
-      if (password.length < 8) {
+      if (!isValidPassword(password)) {
         req.flash('error', 'Mật khẩu phải có ít nhất 8 ký tự.');
         return res.redirect('/auth/register');
       }
@@ -79,7 +80,12 @@ const authController = {
         return res.redirect('/auth/login');
       }
 
-      // Lưu thông tin tối thiểu vào session (không lưu password_hash)
+      const returnTo = req.session.returnTo;
+      const buyNow = req.session.buyNow;
+      await new Promise((resolve, reject) => {
+        req.session.regenerate((error) => error ? reject(error) : resolve());
+      });
+
       req.session.user = {
         id: user.id,
         full_name: user.full_name,
@@ -89,10 +95,9 @@ const authController = {
       req.session.cookie.maxAge = req.body.remember
         ? 1000 * 60 * 60 * 24 * 30
         : 1000 * 60 * 60 * 24;
+      if (buyNow) req.session.buyNow = buyNow;
 
       req.flash('success', `Chào mừng trở lại, ${user.full_name}!`);
-      const returnTo = req.session.returnTo;
-      delete req.session.returnTo;
       if (returnTo === '/orders/checkout') return res.redirect(returnTo);
       if (user.role === 'admin') {
         return res.redirect('/admin');
@@ -104,8 +109,9 @@ const authController = {
   },
 
   // ---------- Đăng xuất ----------
-  logout(req, res) {
-    req.session.destroy(() => {
+  logout(req, res, next) {
+    req.session.destroy((error) => {
+      if (error) return next(error);
       res.redirect('/');
     });
   },

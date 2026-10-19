@@ -1,12 +1,5 @@
--- =========================================================
--- CSDL: electro_shop
--- Website bán đồ điện tử - Bài tập lớn
--- =========================================================
-
-CREATE DATABASE IF NOT EXISTS electro_shop
-  CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
-
-USE electro_shop;
+-- Import this file into the target database selected by the operator.
+-- This keeps the schema compatible with managed databases such as Railway MySQL.
 
 -- ---------------------------------------------------------
 -- Bảng người dùng (khách hàng + quản trị viên)
@@ -133,10 +126,7 @@ CREATE TABLE wishlist_items (
 -- DỮ LIỆU MẪU (seed data)
 -- =========================================================
 
--- Tài khoản admin local (email: admin@electroshop.vn, mật khẩu: ElectroShop@2026!)
-INSERT INTO users (full_name, email, password_hash, role) VALUES
-('Quản trị viên', 'admin@electroshop.vn', '$2b$12$pAl34yjb0bQBvs98daQhH.z5tB8OhpVdK5AmY45Vs13wYIuqku3LS', 'admin');
-
+-- Tạo tài khoản quản trị riêng bằng `npm run admin:create`.
 INSERT INTO categories (name, slug, description) VALUES
 ('Điện thoại', 'dien-thoai', 'Smartphone các hãng'),
 ('Laptop', 'laptop', 'Laptop văn phòng, gaming, đồ họa'),

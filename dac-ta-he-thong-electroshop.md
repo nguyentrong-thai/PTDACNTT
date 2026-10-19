@@ -36,7 +36,7 @@ Middleware `requireLogin`, `requireStaff` và `requireAdmin` kiểm tra session/
 
 1. Email tài khoản là duy nhất; số điện thoại có unique index nếu migration tương ứng đã áp dụng.
 2. Mật khẩu được lưu dưới dạng bcrypt hash trong `users.password_hash`, không lưu plaintext.
-3. Mật khẩu đăng ký và mật khẩu nhân viên tạo mới tối thiểu 8 ký tự; mật khẩu đổi tại trang hồ sơ tối thiểu 6 ký tự theo xử lý hiện tại.
+3. Mật khẩu đăng ký, đổi tại trang hồ sơ và mật khẩu nhân viên tạo mới tối thiểu 8 ký tự.
 4. Giá trong `order_items.unit_price` là giá tại thời điểm đặt hàng; thay đổi giá sản phẩm không làm đổi giá trị đơn cũ.
 5. Khi checkout, hệ thống kiểm tra tồn kho trong transaction, tạo đơn/chi tiết và trừ kho nguyên tử.
 6. Khách chỉ xem đơn có `orders.user_id` bằng ID trong session và chỉ tự hủy đơn `pending`.
@@ -126,7 +126,7 @@ Các route tương thích ngược trong `routes/adminRoutes.js` chuyển tiếp
 - **Tiền điều kiện:** Đã mở form “Đổi mật khẩu” tại `/profile`.
 - **Luồng chính:**
   1. Nhập mật khẩu hiện tại, mật khẩu mới và xác nhận mật khẩu mới.
-  2. Client và server yêu cầu đủ trường; server yêu cầu mật khẩu mới tối thiểu 6 ký tự và hai trường mật khẩu mới trùng nhau.
+  2. Client và server yêu cầu đủ trường; server yêu cầu mật khẩu mới tối thiểu 8 ký tự và hai trường mật khẩu mới trùng nhau.
   3. Hệ thống lấy `password_hash` hiện tại theo ID tài khoản và xác minh mật khẩu hiện tại bằng bcrypt.
   4. Hệ thống bcrypt hash mật khẩu mới và cập nhật `users.password_hash`.
   5. Hệ thống đọc lại hash từ database và xác minh hash mới bằng mật khẩu vừa nhập.
@@ -255,8 +255,8 @@ Các route tương thích ngược trong `routes/adminRoutes.js` chuyển tiếp
 
 ### 7.4. Hạn chế kỹ thuật đang biết
 
-- `express-session` đang dùng store mặc định MemoryStore; không phù hợp triển khai nhiều instance hoặc giữ session bền qua lần khởi động lại.
-- Ảnh sản phẩm lưu trong filesystem của ứng dụng; cần storage bền vững nếu nền tảng triển khai có filesystem tạm.
+- Session được lưu trong MySQL thông qua `express-mysql-session`; bảng `sessions` được tạo tự động khi ứng dụng khởi động.
+- Ảnh sản phẩm lưu trong thư mục `UPLOAD_DIR`; Railway cần gắn persistent volume tại `/app/data` và đặt `UPLOAD_DIR=/app/data/images/products`.
 - Đổi mật khẩu cập nhật credential DB nhưng không thu hồi session đang hoạt động ở thiết bị/phiên khác.
 - Chưa có cổng thanh toán trực tuyến, gửi email giao dịch hoặc báo cáo doanh thu chuyên sâu.
 
@@ -267,7 +267,7 @@ Các route tương thích ngược trong `routes/adminRoutes.js` chuyển tiếp
 ```mermaid
 flowchart TD
     A[Nhấn Đổi mật khẩu] --> B[Nhập mật khẩu hiện tại, mới và xác nhận]
-    B --> C{Đủ trường, tối thiểu 6 ký tự và khớp?}
+    B --> C{Đủ trường, tối thiểu 8 ký tự và khớp?}
     C -- Không --> D[Flash lỗi, quay lại hồ sơ]
     C -- Có --> E[Đọc password_hash từ users]
     E --> F{bcrypt.compare mật khẩu hiện tại}

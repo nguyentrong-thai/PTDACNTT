@@ -7,6 +7,8 @@ const { requireLogin } = require('../middlewares/authMiddleware');
 const router = express.Router();
 router.use(requireLogin);
 
+class CheckoutError extends Error {}
+
 router.get('/checkout', async (req, res, next) => {
   try {
     let buyNowItem = req.session.buyNow;
@@ -46,6 +48,7 @@ router.post('/checkout/cancel-buy-now', (req, res) => {
 
 router.post('/', async (req, res, next) => {
   let connection;
+  let transactionStarted = false;
   try {
     const buyNowItem = req.session.buyNow;
     let cart = buyNowItem ? [buyNowItem] : [];
@@ -59,15 +62,18 @@ router.post('/', async (req, res, next) => {
     }
     connection = await pool.getConnection();
     await connection.beginTransaction();
+    transactionStarted = true;
     if (!buyNowItem) cart = await CartModel.findForCheckout(req.session.user.id, connection);
     if (!cart.length || cart.some((item) => !Number.isSafeInteger(item.quantity) || item.quantity < 1)) {
-      throw new Error('Cart is empty or invalid');
+      throw new CheckoutError('Giỏ hàng đang trống hoặc có số lượng không hợp lệ.');
     }
     let total = 0;
     const items = [];
     for (const cartItem of cart) {
       const [[product]] = await connection.query('SELECT id, price, stock_qty FROM products WHERE id = ? AND is_active = 1 FOR UPDATE', [cartItem.id]);
-      if (!product || product.stock_qty < cartItem.quantity) throw new Error(`Sản phẩm ${cartItem.name} không đủ tồn kho.`);
+      if (!product || product.stock_qty < cartItem.quantity) {
+        throw new CheckoutError(`Sản phẩm ${cartItem.name} không còn đủ số lượng. Vui lòng cập nhật giỏ hàng.`);
+      }
       total += Number(product.price) * cartItem.quantity;
       items.push({ id: product.id, quantity: cartItem.quantity, price: Number(product.price) });
     }
@@ -81,14 +87,24 @@ router.post('/', async (req, res, next) => {
     }
     if (!buyNowItem) await CartModel.clear(req.session.user.id, connection);
     await connection.commit();
+    transactionStarted = false;
     if (buyNowItem) delete req.session.buyNow;
     delete req.session.returnTo;
     req.flash('success', `Đặt hàng thành công. Mã đơn #${orderResult.insertId}.`);
     res.redirect('/orders');
   } catch (err) {
-    if (connection) await connection.rollback();
-    req.flash('error', 'Không thể tạo đơn hàng. Vui lòng kiểm tra lại giỏ hàng và thông tin giao hàng.');
-    res.redirect('/orders/checkout');
+    if (connection && transactionStarted) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        return next(rollbackError);
+      }
+    }
+    if (err instanceof CheckoutError) {
+      req.flash('error', err.message);
+      return res.redirect('/orders/checkout');
+    }
+    next(err);
   } finally { if (connection) connection.release(); }
 });
 
