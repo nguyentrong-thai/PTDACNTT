@@ -97,7 +97,7 @@ Trạng thái dưới đây phản ánh chức năng hiện có trong mã nguồ
 - ✅ Đăng nhập với quyền admin
 - ✅ Quản lý danh mục sản phẩm
 - ✅ Thêm, sửa, xóa sản phẩm (không cho xóa sản phẩm đã có trong đơn hàng)
-- ⚠️ Quản lý tài khoản nhân viên đã có; admin chưa có chức năng quản lý tài khoản khách hàng.
+- ✅ Quản lý tài khoản nhân viên và khách hàng (thêm, sửa, xóa; không xóa khách hàng đã có đơn hàng).
 - ✅ Xem và xử lý đơn hàng
 - ✅ Cập nhật trạng thái đơn hàng theo các bước trạng thái hợp lệ
 - ⚠️ Dashboard có thống kê số sản phẩm, đơn hàng và tài khoản; chưa có nhật ký hoạt động/audit log.
@@ -145,10 +145,10 @@ npm install
 
 ### Bước 2: Tạo file môi trường
 
-Tạo file `.env` từ `.env.example`:
+Tạo file `.env` từ `.env.example` ở thư mục gốc. `.env` chỉ dùng local và không đưa lên Git:
 
-```bash
-copy .env.example .env
+```powershell
+Copy-Item .env.example .env
 ```
 
 ### Bước 3: Cấu hình database
@@ -172,8 +172,9 @@ Tạo `SESSION_SECRET` riêng bằng lệnh `node -e "console.log(require('crypt
 ### Bước 4: Tạo database và khởi động MySQL
 
 - Mở XAMPP hoặc MySQL Server và khởi động MySQL.
-- Tạo database `electro_shop` với charset `utf8mb4` và collation `utf8mb4_unicode_ci`, chọn database đó trong phpMyAdmin rồi import `database/schema.sql`.
+- Tạo database `electro_shop` với charset `utf8mb4` và collation `utf8mb4_unicode_ci`.
 - File schema chỉ tạo bảng và dữ liệu mẫu trong database đang được chọn; nó không tạo hoặc chuyển sang database khác.
+- Với database mới, chạy `npm run db:import` để nạp schema và dữ liệu mẫu. Chỉ chạy trên database rỗng; không chạy lại trên database đã có bảng/dữ liệu.
 
 Nếu đang dùng database cũ, chạy thêm các migration cần thiết trong thư mục `database/`. Với thay đổi use case hiện tại, chạy `migration-account-cart.sql`, `migration-employee-position.sql` và `migration-unique-user-phone.sql`; migration số điện thoại yêu cầu xử lý các số trùng trước khi tạo unique index.
 
@@ -238,13 +239,12 @@ SESSION_SECRET=your_strong_secret
 
 ## 9. Triển khai trên Railway
 
-1. Push source code lên GitHub, tạo project Railway và deploy repository này. `railway.json` cấu hình lệnh `npm start` và health check `/healthz`.
-2. Thêm dịch vụ MySQL vào cùng project Railway. Chọn database của dịch vụ MySQL trước khi import `database/schema.sql`; schema không tạo database khác.
-3. Trong service ứng dụng, nhập các biến từ `.env.railway.example` vào Railway Variables (đây là mẫu để sao chép, không phải file `.env` để deploy). Đổi `MySQL` trong các tham chiếu `${{MySQL.MYSQLHOST}}` thành đúng tên service MySQL nếu service có tên khác. Railway tự cấp biến `PORT`. Đặt `SESSION_SECRET` bằng chuỗi ngẫu nhiên riêng, tối thiểu 32 ký tự; không dùng giá trị mẫu.
-4. Trước khi import schema production, sao lưu database. Schema không seed tài khoản admin với mật khẩu cố định. Tạo admin bằng lệnh một lần với `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` được đặt tạm thời trong môi trường Railway CLI; chạy `railway run npm run admin:create`, sau đó xóa biến mật khẩu. Lệnh không thay đổi tài khoản đã tồn tại.
-5. Thêm Railway Volume cho service ứng dụng, mount tại `/app/data`. Biến `UPLOAD_DIR=/app/data/images/products` sẽ lưu ảnh upload qua các lần deploy/restart. Nếu không gắn volume, filesystem upload có thể bị mất khi deploy/restart.
-6. Ứng dụng dùng MySQL lưu session; khi khởi động, session table `sessions` được tạo tự động. Tài khoản database cần quyền tạo bảng.
-7. Đợi deployment báo healthy, mở URL HTTPS và chạy smoke-test đăng ký/đăng nhập/đổi mật khẩu, thêm giỏ hàng, checkout, theo dõi/hủy đơn và quyền Employee/Admin. Endpoint `GET /healthz` chỉ xác nhận tiến trình đã sẵn sàng; nó không thay thế smoke-test nghiệp vụ.
+1. Push code lên GitHub, tạo project Railway và deploy repository. `railway.json` dùng `npm start` và health check `/healthz`.
+2. Thêm service MySQL trong cùng project. Trong service ứng dụng, thêm các biến từ `.env.railway.example` vào Railway Variables. Đổi `MySQL` trong tham chiếu `${{MySQL.MYSQLHOST}}`... cho đúng tên service nếu khác. Railway tự cấp `PORT`; đặt `SESSION_SECRET` riêng, tối thiểu 32 ký tự.
+3. Nếu database Railway chưa có schema, nạp `database/schema.sql` một lần vào database đó. Có thể chạy `railway run npm run db:import` từ máy đã cài và link Railway CLI đúng project/environment/service. Hoặc chạy `npm run db:import` từ local với thông tin **public** MySQL Railway trong biến môi trường. Không dùng host nội bộ Railway khi chạy từ máy local. Chỉ import vào database rỗng; sao lưu trước khi thay đổi database hiện có.
+4. Tạo tài khoản admin một lần bằng `npm run admin:create`, với `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` tạm thời và kết nối tới đúng database. Với Railway CLI, dùng `railway run npm run admin:create`. Script không đổi tài khoản nếu email đó đã tồn tại; không lưu mật khẩu admin trong Git.
+5. (Tuỳ chọn) Gắn Railway Volume vào service ứng dụng tại `/app/data` để ảnh upload không mất sau deploy/restart.
+6. Ứng dụng lưu session trong MySQL; bảng `sessions` được tạo tự động khi app khởi động, vì vậy user database cần quyền tạo bảng. Đợi deployment healthy rồi kiểm tra đăng nhập, quyền admin và các chức năng chính; `/healthz` chỉ xác nhận server đã khởi động.
 
 ---
 

@@ -12,7 +12,7 @@ const uploadDirectory = require('../config/uploadStorage');
 
 const router = express.Router();
 router.use(requireStaff);
-router.use(['/users', '/staff', '/staffs', '/categories'], requireAdmin);
+router.use(['/users', '/staff', '/staffs', '/customers', '/categories'], requireAdmin);
 
 function getPage(value, limit) {
   const page = Math.max(1, Number.parseInt(value, 10) || 1);
@@ -108,6 +108,29 @@ function getEmployeeInput({ full_name, email, phone, address, gender, date_of_bi
     gender: gender || null,
     dateOfBirth: date_of_birth || null,
     position: position.trim(),
+    password: password || null,
+  };
+}
+
+function getCustomerInput({ full_name, email, phone, address, gender, date_of_birth, password } = {}, { requirePassword = false } = {}) {
+  if (typeof full_name !== 'string' || !full_name.trim() || full_name.trim().length > 100) return null;
+  if (typeof email !== 'string' || !/^\S+@\S+\.\S+$/.test(email.trim()) || email.trim().length > 150) return null;
+  if (typeof phone !== 'string' || (phone.trim() && !/^[0-9+()\-\s]{8,20}$/.test(phone.trim()))) return null;
+  if (typeof address !== 'string' || address.trim().length > 255) return null;
+  if (gender && !['male', 'female', 'other'].includes(gender)) return null;
+  if (date_of_birth) {
+    const parsedDate = new Date(`${date_of_birth}T00:00:00Z`);
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(date_of_birth) || Number.isNaN(parsedDate.getTime()) || parsedDate.toISOString().slice(0, 10) !== date_of_birth) return null;
+  }
+  if (requirePassword && !isValidPassword(password)) return null;
+  if (!requirePassword && password && !isValidPassword(password)) return null;
+  return {
+    fullName: full_name.trim(),
+    email: email.trim().toLowerCase(),
+    phone: phone.trim() || null,
+    address: address.trim() || null,
+    gender: gender || null,
+    dateOfBirth: date_of_birth || null,
     password: password || null,
   };
 }
@@ -255,6 +278,136 @@ router.post('/users/:id/delete', async (req, res, next) => {
     req.flash('success', 'Đã xóa tài khoản nhân viên.');
     res.redirect('/admin/users');
   } catch (err) { next(err); }
+});
+
+router.get('/customers', async (req, res, next) => {
+  try {
+    const [customers] = await pool.query(
+      `SELECT u.id, u.full_name, u.email, u.phone, u.address, u.gender, u.date_of_birth, u.created_at,
+              COALESCE(order_counts.order_count, 0) AS order_count
+       FROM users u
+       LEFT JOIN (
+         SELECT user_id, COUNT(*) AS order_count FROM orders GROUP BY user_id
+       ) order_counts ON order_counts.user_id = u.id
+       WHERE u.role = 'user'
+       ORDER BY u.created_at DESC`
+    );
+    res.render('admin/customers', { title: 'Quản lý khách hàng', customers });
+  } catch (err) { next(err); }
+});
+
+router.get('/customers/new', (req, res) => {
+  res.render('admin/customer-form', { title: 'Thêm khách hàng', customer: {}, formAction: '/admin/customers' });
+});
+
+router.post('/customers', async (req, res, next) => {
+  try {
+    const customer = getCustomerInput(req.body, { requirePassword: true });
+    if (!customer) {
+      req.flash('error', 'Vui lòng nhập thông tin khách hàng hợp lệ và mật khẩu đạt yêu cầu.');
+      return res.redirect('/admin/customers/new');
+    }
+    const passwordHash = await bcrypt.hash(customer.password, 12);
+    await pool.query(
+      `INSERT INTO users (full_name, email, password_hash, phone, address, gender, date_of_birth, role)
+       VALUES (?, ?, ?, ?, ?, ?, ?, 'user')`,
+      [customer.fullName, customer.email, passwordHash, customer.phone, customer.address, customer.gender, customer.dateOfBirth]
+    );
+    req.flash('success', 'Đã thêm tài khoản khách hàng.');
+    res.redirect('/admin/customers');
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      req.flash('error', 'Email hoặc số điện thoại khách hàng đã tồn tại.');
+      return res.redirect('/admin/customers/new');
+    }
+    next(err);
+  }
+});
+
+router.get('/customers/:id/edit', async (req, res, next) => {
+  try {
+    const [[customer]] = await pool.query(
+      "SELECT id, full_name, email, phone, address, gender, date_of_birth FROM users WHERE id = ? AND role = 'user'",
+      [req.params.id]
+    );
+    if (!customer) return res.status(404).render('404', { title: 'Không tìm thấy khách hàng' });
+    res.render('admin/customer-form', { title: 'Sửa khách hàng', customer, formAction: `/admin/customers/${customer.id}/update` });
+  } catch (err) { next(err); }
+});
+
+router.post('/customers/:id/update', async (req, res, next) => {
+  try {
+    const customer = getCustomerInput(req.body);
+    if (!customer) {
+      req.flash('error', 'Vui lòng nhập thông tin khách hàng hợp lệ.');
+      return res.redirect(`/admin/customers/${req.params.id}/edit`);
+    }
+    const [[existing]] = await pool.query("SELECT id FROM users WHERE id = ? AND role = 'user'", [req.params.id]);
+    if (!existing) return res.status(404).render('404', { title: 'Không tìm thấy khách hàng' });
+    if (customer.password) {
+      const passwordHash = await bcrypt.hash(customer.password, 12);
+      await pool.query(
+        "UPDATE users SET full_name = ?, email = ?, password_hash = ?, phone = ?, address = ?, gender = ?, date_of_birth = ? WHERE id = ? AND role = 'user'",
+        [customer.fullName, customer.email, passwordHash, customer.phone, customer.address, customer.gender, customer.dateOfBirth, req.params.id]
+      );
+    } else {
+      await pool.query(
+        "UPDATE users SET full_name = ?, email = ?, phone = ?, address = ?, gender = ?, date_of_birth = ? WHERE id = ? AND role = 'user'",
+        [customer.fullName, customer.email, customer.phone, customer.address, customer.gender, customer.dateOfBirth, req.params.id]
+      );
+    }
+    req.flash('success', 'Đã cập nhật tài khoản khách hàng.');
+    res.redirect('/admin/customers');
+  } catch (err) {
+    if (err.code === 'ER_DUP_ENTRY') {
+      req.flash('error', 'Email hoặc số điện thoại khách hàng đã tồn tại.');
+      return res.redirect(`/admin/customers/${req.params.id}/edit`);
+    }
+    next(err);
+  }
+});
+
+router.post('/customers/:id/delete', async (req, res, next) => {
+  let connection;
+  let transactionStarted = false;
+  try {
+    connection = await pool.getConnection();
+    await connection.beginTransaction();
+    transactionStarted = true;
+    const [[customer]] = await connection.query(
+      "SELECT id FROM users WHERE id = ? AND role = 'user' FOR UPDATE",
+      [req.params.id]
+    );
+    if (!customer) {
+      await connection.rollback();
+      transactionStarted = false;
+      req.flash('error', 'Không tìm thấy khách hàng.');
+      return res.redirect('/admin/customers');
+    }
+    const [[orders]] = await connection.query('SELECT COUNT(*) AS total FROM orders WHERE user_id = ?', [customer.id]);
+    if (Number(orders.total)) {
+      await connection.rollback();
+      transactionStarted = false;
+      req.flash('error', 'Không thể xóa khách hàng đã có đơn hàng.');
+      return res.redirect('/admin/customers');
+    }
+    await connection.query("DELETE FROM users WHERE id = ? AND role = 'user'", [customer.id]);
+    await connection.commit();
+    transactionStarted = false;
+    req.flash('success', 'Đã xóa tài khoản khách hàng.');
+    res.redirect('/admin/customers');
+  } catch (err) {
+    if (connection && transactionStarted) {
+      try {
+        await connection.rollback();
+      } catch (rollbackError) {
+        return next(rollbackError);
+      }
+    }
+    next(err);
+  } finally {
+    if (connection) connection.release();
+  }
 });
 
 router.get('/products/new', async (req, res, next) => {

@@ -7,6 +7,7 @@
     "start": "node app.js",
     "dev": "nodemon app.js",
     "test": "node --test",
+    "db:import": "node import.js",
     "admin:create": "node database/create-admin.js"
   },
   "dependencies": {

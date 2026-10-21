@@ -14,7 +14,10 @@
       <a class="admin-side-brand" href="/admin">TRANG CHỦ</a>
       <nav>
         <% if (currentUser.role !== 'admin') { %><a class="<%= currentPath.startsWith('/profile') ? 'is-active' : '' %>" href="/profile">Thông tin cá nhân</a><% } %>
-        <% if (currentUser.role === 'admin') { %><a class="<%= currentPath.startsWith('/admin/users') ? 'is-active' : '' %>" href="/admin/users">Quản lý tài khoản</a><% } %>
+        <% if (currentUser.role === 'admin') { %>
+          <a class="<%= currentPath.startsWith('/admin/users') ? 'is-active' : '' %>" href="/admin/users">Quản lý nhân viên</a>
+          <a class="<%= currentPath.startsWith('/admin/customers') ? 'is-active' : '' %>" href="/admin/customers">Quản lý khách hàng</a>
+        <% } %>
         <a class="<%= currentPath.startsWith('/admin/products') ? 'is-active' : '' %>" href="/admin/products">Quản lý sản phẩm</a>
         <% if (currentUser.role === 'admin') { %><a class="<%= currentPath.startsWith('/admin/categories') ? 'is-active' : '' %>" href="/admin/categories">Quản lý thể loại</a><% } %>
         <a class="<%= currentPath.startsWith('/admin/orders') || currentPath.startsWith('/admin/bills') ? 'is-active' : '' %>" href="/admin/orders">Quản lý hóa đơn</a>

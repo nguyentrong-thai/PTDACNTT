@@ -1,0 +1,14 @@
+<%- include('../partials/header') %>
+<section class="page-heading"><p class="eyebrow">QUẢN TRỊ TÀI KHOẢN KHÁCH HÀNG</p><h1><%= customer.id ? 'Sửa tài khoản khách hàng' : 'Thêm tài khoản khách hàng' %></h1></section>
+<form class="admin-form" method="post" action="<%= formAction %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label>Họ và tên<input name="full_name" value="<%= customer.full_name || '' %>" maxlength="100" autocomplete="name" required></label>
+  <label>Email<input type="email" name="email" value="<%= customer.email || '' %>" maxlength="150" autocomplete="email" required></label>
+  <div class="form-row"><label>Giới tính<select name="gender"><option value="">Chưa chọn</option><option value="male" <%= customer.gender === 'male' ? 'selected' : '' %>>Nam</option><option value="female" <%= customer.gender === 'female' ? 'selected' : '' %>>Nữ</option><option value="other" <%= customer.gender === 'other' ? 'selected' : '' %>>Khác</option></select></label><label>Ngày sinh<input type="date" name="date_of_birth" value="<%= customer.date_of_birth ? new Date(customer.date_of_birth).toISOString().slice(0, 10) : '' %>"></label></div>
+  <label>Số điện thoại<input type="tel" name="phone" value="<%= customer.phone || '' %>" maxlength="20" pattern="[0-9+()\s-]{8,20}" autocomplete="tel"></label>
+  <label>Địa chỉ<input name="address" value="<%= customer.address || '' %>" maxlength="255" autocomplete="street-address"></label>
+  <label>Mật khẩu<% if (customer.id) { %><small class="form-help">Để trống nếu không muốn đặt lại mật khẩu.</small><% } %><input type="password" name="password" minlength="8" autocomplete="new-password" <%= customer.id ? '' : 'required' %>></label>
+  <button class="btn btn-primary" type="submit"><%= customer.id ? 'Lưu thay đổi' : 'Thêm khách hàng' %></button>
+  <a class="cancel-link" href="/admin/customers">Hủy</a>
+</form>
+<%- include('../partials/footer') %>

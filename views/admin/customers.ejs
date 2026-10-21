@@ -1,0 +1,25 @@
+<%- include('../partials/header') %>
+<section class="page-heading"><p class="eyebrow">KHU VỰC QUẢN TRỊ</p><h1>Quản lý khách hàng</h1><p class="muted">Thêm, cập nhật và quản lý tài khoản khách hàng. Tài khoản đã có đơn hàng không thể bị xóa.</p></section>
+<div class="admin-actions"><a class="btn btn-primary" href="/admin/customers/new">+ Thêm khách hàng</a><a class="cancel-link" href="/admin">Về dashboard</a><label class="admin-inline-search"><span class="visually-hidden">Tìm kiếm khách hàng</span><input data-user-search type="search" placeholder="Tìm khách hàng"></label></div>
+<div class="admin-table employee-admin-table">
+  <% if (!customers.length) { %><div class="empty-state"><h2>Chưa có khách hàng</h2><p>Khách hàng đăng ký sẽ hiển thị tại đây.</p></div><% } %>
+  <% customers.forEach((customer) => { %>
+    <div class="table-row employee-row" data-user-row>
+      <div>
+        <strong>#<%= customer.id %> · <%= customer.full_name %></strong>
+        <small><%= customer.email %> · <%= customer.phone || 'Chưa có số điện thoại' %></small>
+        <small><%= customer.address || 'Chưa có địa chỉ' %> · <%= customer.order_count %> đơn hàng · Tham gia <%= new Date(customer.created_at).toLocaleDateString('vi-VN') %></small>
+      </div>
+      <div>
+        <a class="text-button" href="/admin/customers/<%= customer.id %>/edit">Sửa</a>
+        <% if (Number(customer.order_count) === 0) { %>
+          <form class="inline-form" method="post" action="/admin/customers/<%= customer.id %>/delete" onsubmit="return confirm('Bạn có chắc chắn muốn xóa tài khoản khách hàng này?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="text-button" type="submit">Xóa</button></form>
+        <% } else { %>
+          <span class="muted" title="Không thể xóa khách hàng đã có đơn hàng">Không thể xóa</span>
+        <% } %>
+      </div>
+    </div>
+  <% }) %>
+</div>
+<script src="/js/admin-users.js" defer></script>
+<%- include('../partials/footer') %>
