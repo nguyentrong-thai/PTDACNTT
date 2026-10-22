@@ -175,6 +175,7 @@ Tạo `SESSION_SECRET` riêng bằng lệnh `node -e "console.log(require('crypt
 - Tạo database `electro_shop` với charset `utf8mb4` và collation `utf8mb4_unicode_ci`.
 - File schema chỉ tạo bảng và dữ liệu mẫu trong database đang được chọn; nó không tạo hoặc chuyển sang database khác.
 - Với database mới, chạy `npm run db:import` để nạp schema và dữ liệu mẫu. Chỉ chạy trên database rỗng; không chạy lại trên database đã có bảng/dữ liệu.
+- Bộ dữ liệu mẫu hiện có 123 sản phẩm thuộc các danh mục điện thoại, laptop, phụ kiện và đồng hồ thông minh.
 
 Nếu đang dùng database cũ, chạy thêm các migration cần thiết trong thư mục `database/`. Với thay đổi use case hiện tại, chạy `migration-account-cart.sql`, `migration-employee-position.sql` và `migration-unique-user-phone.sql`; migration số điện thoại yêu cầu xử lý các số trùng trước khi tạo unique index.
 
