@@ -1,5 +1,8 @@
--- Import this file into the target database selected by the operator.
--- This keeps the schema compatible with managed databases such as Railway MySQL.
+-- Create and select the application database before creating its tables.
+CREATE DATABASE IF NOT EXISTS electro_shop
+  CHARACTER SET utf8mb4
+  COLLATE utf8mb4_unicode_ci;
+USE electro_shop;
 
 -- ---------------------------------------------------------
 -- Bảng người dùng (khách hàng + quản trị viên)
