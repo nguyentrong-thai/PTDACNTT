@@ -10,6 +10,9 @@ require('dotenv').config();
     user: process.env.MYSQLUSER || process.env.DB_USER,
     password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || process.env.DB_PASS,
     database: process.env.MYSQLDATABASE || process.env.DB_NAME,
+    ssl: process.env.DB_SSL === 'true'
+      ? { minVersion: 'TLSv1.2', rejectUnauthorized: true }
+      : undefined,
     multipleStatements: true,
     charset: 'utf8mb4',
   });

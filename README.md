@@ -169,6 +169,21 @@ SESSION_SECRET=replace-with-a-random-secret-at-least-32-characters
 
 Tạo `SESSION_SECRET` riêng bằng lệnh `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`; không dùng chuỗi mẫu.
 
+#### Dùng TiDB Cloud
+
+Trong `.env`, thay cấu hình local bằng thông tin tại **TiDB Cloud → Connect → General**:
+
+```env
+DB_HOST=your-cluster-host
+DB_PORT=4000
+DB_USER=your TiDB Cloud username
+DB_PASSWORD=your TiDB Cloud password
+DB_NAME=electro_shop
+DB_SSL=true
+```
+
+TiDB Cloud yêu cầu TLS; giữ `DB_SSL=true` để ứng dụng và `npm run db:import` kết nối an toàn. Cần tạo database `electro_shop` trước khi chạy import. Không đưa thông tin kết nối thật hoặc file `.env` lên Git.
+
 ### Bước 4: Tạo database và khởi động MySQL
 
 - Mở XAMPP hoặc MySQL Server và khởi động MySQL.
@@ -218,23 +233,24 @@ Lệnh chỉ tạo tài khoản nếu email chưa tồn tại và không in mậ
 ## 8. Triển khai trên Render
 
 1. Push source code lên GitHub
-2. Tạo database MySQL trên Render hoặc sử dụng dịch vụ DB tương thích
-3. Tạo Web Service trên Render và kết nối repo GitHub
-4. Thêm biến môi trường theo mẫu:
+2. Tạo TiDB Cloud cluster, mở **Connect → General** và lấy host, port, username, password. TiDB Cloud dùng port `4000` và yêu cầu TLS.
+3. Tạo Web Service trên Render và kết nối repo GitHub. Dùng Build Command `npm install` và Start Command `npm start`.
+4. Trong **Environment** của Render, thêm các biến sau (không thêm `.env` lên GitHub):
 
 ```env
 NODE_ENV=production
-PORT=10000
-DB_HOST=your_db_host
-DB_PORT=3306
-DB_USER=your_db_user
-DB_PASSWORD=your_db_password
+DB_HOST=your_tidb_cloud_host
+DB_PORT=4000
+DB_USER=your_tidb_cloud_username
+DB_PASSWORD=your_tidb_cloud_password
 DB_NAME=electro_shop
+DB_SSL=true
 SESSION_SECRET=your_strong_secret
 ```
 
-5. Import `database/schema.sql` vào database online
-6. Khởi động service và kiểm tra các chức năng chính
+Render tự cấp `PORT`; ứng dụng đọc biến này khi khởi động. Ở local, giữ các giá trị MySQL trong `.env` (`DB_HOST=localhost`, `DB_PORT=3306`, `DB_SSL=false`). Hai môi trường dùng cấu hình riêng, không cần sửa code khi chuyển môi trường.
+5. Tạo database `electro_shop` trên TiDB Cloud, sau đó import `database/schema.sql` một lần vào database rỗng. Có thể chạy `npm run db:import` từ máy local khi tạm cấu hình các biến `DB_*` trỏ tới TiDB (`DB_SSL=true`); không chạy lại trên database đã có bảng/dữ liệu.
+6. Đặt `SESSION_SECRET` riêng, tối thiểu 32 ký tự. User TiDB cần quyền tạo bảng vì ứng dụng tạo bảng lưu session khi khởi động. Khởi động service và kiểm tra các chức năng chính.
 
 ---
 
