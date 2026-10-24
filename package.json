@@ -8,6 +8,7 @@
     "dev": "nodemon app.js",
     "test": "node --test",
     "db:import": "node import.js",
+    "db:import:local": "node import.js database/schema.local.sql",
     "admin:create": "node database/create-admin.js"
   },
   "dependencies": {

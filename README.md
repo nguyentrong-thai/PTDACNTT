@@ -153,7 +153,7 @@ Copy-Item .env.example .env
 
 ### Bước 3: Cấu hình database
 
-File `.env` có dạng như sau:
+Để chạy local với MySQL/XAMPP, file `.env` dùng cấu hình:
 
 ```env
 NODE_ENV=development
@@ -163,36 +163,36 @@ DB_PORT=3306
 DB_USER=root
 DB_PASSWORD=
 DB_NAME=electro_shop
+DB_SSL=false
 UPLOAD_DIR=public/images/products
 SESSION_SECRET=replace-with-a-random-secret-at-least-32-characters
 ```
 
 Tạo `SESSION_SECRET` riêng bằng lệnh `node -e "console.log(require('crypto').randomBytes(48).toString('hex'))"`; không dùng chuỗi mẫu.
 
-#### Dùng TiDB Cloud
-
-Trong `.env`, thay cấu hình local bằng thông tin tại **TiDB Cloud → Connect → General**:
-
-```env
-DB_HOST=your-cluster-host
-DB_PORT=4000
-DB_USER=your TiDB Cloud username
-DB_PASSWORD=your TiDB Cloud password
-DB_NAME=electro_shop
-DB_SSL=true
-```
-
-TiDB Cloud yêu cầu TLS; giữ `DB_SSL=true` để ứng dụng và `npm run db:import` kết nối an toàn. Cần tạo database `electro_shop` trước khi chạy import. Không đưa thông tin kết nối thật hoặc file `.env` lên Git.
-
 ### Bước 4: Tạo database và khởi động MySQL
 
 - Mở XAMPP hoặc MySQL Server và khởi động MySQL.
-- Tạo database `electro_shop` với charset `utf8mb4` và collation `utf8mb4_unicode_ci`.
-- File schema chỉ tạo bảng và dữ liệu mẫu trong database đang được chọn; nó không tạo hoặc chuyển sang database khác.
-- Với database mới, chạy `npm run db:import` để nạp schema và dữ liệu mẫu. Chỉ chạy trên database rỗng; không chạy lại trên database đã có bảng/dữ liệu.
+- Với database local mới/rỗng, chạy `npm run db:import:local`. Lệnh này nạp schema, dữ liệu mẫu và admin local bên dưới.
+- Chỉ import vào database rỗng. Không chạy lại trên database đã có bảng/dữ liệu.
 - Bộ dữ liệu mẫu hiện có 123 sản phẩm thuộc các danh mục điện thoại, laptop, phụ kiện và đồng hồ thông minh.
 
+| File schema | Dùng ở đâu | Có admin mẫu? |
+|---|---|---|
+| `database/schema.local.sql` | MySQL/XAMPP local (`npm run db:import:local`) | Có |
+| `database/schema.sql` | TiDB Cloud, Railway, production (`npm run db:import`) | Không |
+
 Nếu đang dùng database cũ, chạy thêm các migration cần thiết trong thư mục `database/`. Với thay đổi use case hiện tại, chạy `migration-account-cart.sql`, `migration-employee-position.sql` và `migration-unique-user-phone.sql`; migration số điện thoại yêu cầu xử lý các số trùng trước khi tạo unique index.
+
+#### Tài khoản admin local
+
+Chỉ file `database/schema.local.sql` tạo sẵn tài khoản demo này:
+
+| Email | Mật khẩu |
+|---|---|
+| `admin@electroshop.vn` | `ElectroShop@2026!` |
+
+Tài khoản và mật khẩu này chỉ để thử nghiệm local. Không dùng trên website công khai hoặc production.
 
 ### Bước 5: Chạy ứng dụng
 
@@ -213,20 +213,6 @@ Mở trình duyệt và truy cập:
 ```text
 http://localhost:3000
 ```
-
-### Tạo tài khoản admin
-
-Tạo tài khoản admin riêng sau khi import schema. Đặt các biến môi trường tạm thời rồi chạy:
-
-```powershell
-$env:ADMIN_NAME = "Quản trị viên"
-$env:ADMIN_EMAIL = "admin@example.com"
-$env:ADMIN_PASSWORD = "replace-with-a-unique-password"
-npm run admin:create
-Remove-Item Env:ADMIN_PASSWORD
-```
-
-Lệnh chỉ tạo tài khoản nếu email chưa tồn tại và không in mật khẩu/hash ra log.
 
 ---
 
@@ -249,8 +235,29 @@ SESSION_SECRET=your_strong_secret
 ```
 
 Render tự cấp `PORT`; ứng dụng đọc biến này khi khởi động. Ở local, giữ các giá trị MySQL trong `.env` (`DB_HOST=localhost`, `DB_PORT=3306`, `DB_SSL=false`). Hai môi trường dùng cấu hình riêng, không cần sửa code khi chuyển môi trường.
-5. Tạo database `electro_shop` trên TiDB Cloud, sau đó import `database/schema.sql` một lần vào database rỗng. Có thể chạy `npm run db:import` từ máy local khi tạm cấu hình các biến `DB_*` trỏ tới TiDB (`DB_SSL=true`); không chạy lại trên database đã có bảng/dữ liệu.
-6. Đặt `SESSION_SECRET` riêng, tối thiểu 32 ký tự. User TiDB cần quyền tạo bảng vì ứng dụng tạo bảng lưu session khi khởi động. Khởi động service và kiểm tra các chức năng chính.
+5. Tạo database `electro_shop` trên TiDB Cloud. Import **`database/schema.sql`** một lần vào database rỗng. File này không chứa tài khoản admin demo.
+6. Tạo admin riêng cho production từ terminal trong thư mục dự án. Dùng thông tin TiDB của bạn, không dùng mật khẩu mẫu local:
+
+```powershell
+$env:DB_HOST = "your_tidb_cloud_host"
+$env:DB_PORT = "4000"
+$env:DB_USER = "your_tidb_cloud_username"
+$env:DB_PASSWORD = "your_tidb_cloud_password"
+$env:DB_NAME = "electro_shop"
+$env:DB_SSL = "true"
+$env:ADMIN_NAME = "Quản trị viên"
+$env:ADMIN_EMAIL = "your-admin@example.com"
+$env:ADMIN_PASSWORD = "your-unique-password-at-least-8-characters"
+npm run admin:create
+```
+
+Không import `database/schema.local.sql` lên dịch vụ. Sau khi tạo admin, xóa `ADMIN_PASSWORD` khỏi terminal:
+
+```powershell
+Remove-Item Env:ADMIN_PASSWORD
+```
+
+7. Đặt `SESSION_SECRET` riêng, tối thiểu 32 ký tự. User TiDB cần quyền tạo bảng vì ứng dụng tạo bảng lưu session khi khởi động. Khởi động service và kiểm tra các chức năng chính.
 
 ---
 
@@ -258,7 +265,7 @@ Render tự cấp `PORT`; ứng dụng đọc biến này khi khởi động. �
 
 1. Push code lên GitHub, tạo project Railway và deploy repository. `railway.json` dùng `npm start` và health check `/healthz`.
 2. Thêm service MySQL trong cùng project. Trong service ứng dụng, thêm các biến từ `.env.railway.example` vào Railway Variables. Đổi `MySQL` trong tham chiếu `${{MySQL.MYSQLHOST}}`... cho đúng tên service nếu khác. Railway tự cấp `PORT`; đặt `SESSION_SECRET` riêng, tối thiểu 32 ký tự.
-3. Nếu database Railway chưa có schema, nạp `database/schema.sql` một lần vào database đó. Có thể chạy `railway run npm run db:import` từ máy đã cài và link Railway CLI đúng project/environment/service. Hoặc chạy `npm run db:import` từ local với thông tin **public** MySQL Railway trong biến môi trường. Không dùng host nội bộ Railway khi chạy từ máy local. Chỉ import vào database rỗng; sao lưu trước khi thay đổi database hiện có.
+3. Nếu database Railway chưa có schema, nạp `database/schema.sql` một lần vào database đó. Có thể chạy `railway run npm run db:import` từ máy đã cài và link Railway CLI đúng project/environment/service. Hoặc chạy `npm run db:import` từ local với thông tin **public** MySQL Railway trong biến môi trường. Không dùng host nội bộ Railway khi chạy từ máy local. Chỉ import vào database rỗng; sao lưu trước khi thay đổi database hiện có. Không import `database/schema.local.sql` lên dịch vụ.
 4. Tạo tài khoản admin một lần bằng `npm run admin:create`, với `ADMIN_NAME`, `ADMIN_EMAIL`, `ADMIN_PASSWORD` tạm thời và kết nối tới đúng database. Với Railway CLI, dùng `railway run npm run admin:create`. Script không đổi tài khoản nếu email đó đã tồn tại; không lưu mật khẩu admin trong Git.
 5. (Tuỳ chọn) Gắn Railway Volume vào service ứng dụng tại `/app/data` để ảnh upload không mất sau deploy/restart.
 6. Ứng dụng lưu session trong MySQL; bảng `sessions` được tạo tự động khi app khởi động, vì vậy user database cần quyền tạo bảng. Đợi deployment healthy rồi kiểm tra đăng nhập, quyền admin và các chức năng chính; `/healthz` chỉ xác nhận server đã khởi động.

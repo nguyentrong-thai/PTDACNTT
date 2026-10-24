@@ -1,3 +1,5 @@
+-- Service schema for TiDB Cloud, Railway, and other production databases.
+-- This file intentionally does not create a demo administrator account.
 -- Create and select the application database before creating its tables.
 CREATE DATABASE IF NOT EXISTS electro_shop
   CHARACTER SET utf8mb4

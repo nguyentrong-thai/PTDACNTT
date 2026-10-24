@@ -18,7 +18,8 @@ require('dotenv').config();
   });
 
   try {
-    await conn.query(fs.readFileSync('database/schema.sql', 'utf8'));
+    const schemaPath = process.argv[2] || 'database/schema.sql';
+    await conn.query(fs.readFileSync(schemaPath, 'utf8'));
     console.log('Import xong');
   } finally {
     await conn.end();
