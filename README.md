@@ -18,7 +18,7 @@ models/                 Truy vấn database
 routes/                 Các endpoint
 views/                  Giao diện EJS
 public/                 CSS, JavaScript, ảnh
-database/               Schema, import và migration cũ
+database/               Hai schema, import và tạo admin
 tests/                  Kiểm thử
 ```
 
@@ -129,4 +129,4 @@ Không dùng `database/schema.local.sql` trên dịch vụ. Database user cần 
 | `npm run db:import` | Nạp schema dịch vụ |
 | `npm run admin:create` | Tạo admin cho database đang cấu hình |
 
-`database/migration-*.sql` dùng để nâng cấp database cũ; không chạy các migration trên database mới đã import schema. Các file `.env` chứa bí mật không được đưa lên GitHub.
+Hai schema dùng cho database mới; các file `.env` chứa bí mật không được đưa lên GitHub.
