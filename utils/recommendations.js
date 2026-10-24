@@ -6,24 +6,43 @@ function normalize(value) {
     .replace(/đ/g, 'd');
 }
 
-function parseBudget(message) {
-  const match = message.match(/(?:duoi|under|toi da|max|<)\s*(\d+(?:[.,]\d+)?)\s*(trieu|tr|m|million|k)?/i);
+function parseBudgetConstraint(message) {
+  const match = message.match(
+    /(?:\b(duoi|under|toi da|max|tren|above|over)\s*|(<|>=)\s*)(\d+(?:[.,]\d+)*)(?:\s*(trieu|tr|m|million|k))?|(\d+(?:[.,]\d+)*)\s*(trieu|tr|m|million|k)\b|(\d{1,3}(?:[.,]\d{3})+|\d{5,})/i
+  );
   if (!match) return null;
-  const amount = Number(match[1].replace(',', '.'));
-  const unit = (match[2] || '').toLowerCase();
-  if (['trieu', 'tr', 'm', 'million'].includes(unit)) return amount * 1000000;
-  if (unit === 'k') return amount * 1000;
-  return amount;
+
+  const rawAmount = match[3] || match[5] || match[7];
+  const unit = (match[4] || match[6] || '').toLowerCase();
+  const amount = unit
+    ? Number(rawAmount.replace(',', '.'))
+    : Number(rawAmount.replace(/[.,]/g, ''));
+  if (!Number.isFinite(amount)) return null;
+
+  let multiplier = 1;
+  if (['trieu', 'tr', 'm', 'million'].includes(unit)) multiplier = 1000000;
+  if (unit === 'k') multiplier = 1000;
+
+  return {
+    amount: amount * multiplier,
+    direction: ['tren', 'above', 'over'].includes(match[1]) || match[2] === '>='
+      ? 'minimum'
+      : 'maximum',
+  };
+}
+
+function parseBudget(message) {
+  return parseBudgetConstraint(message)?.amount ?? null;
 }
 
 function findRecommendations(products, message) {
   const normalizedMessage = normalize(message);
-  const budget = parseBudget(normalizedMessage);
+  const budgetConstraint = parseBudgetConstraint(normalizedMessage);
   const ignoredWords = new Set([
     'toi', 'can', 'muon', 'tim', 'tu', 'van', 'gia', 'duoi', 'tren', 'khoang',
     'cho', 'mot', 'con', 'hang', 'nao', 'loai', 'san', 'pham', 'goi', 'y',
     'giup', 'voi', 'va', 'co', 'khong', 'la', 'the', 'ngan', 'sach', 'mua',
-    'trieu', 'million', 'under', 'max',
+    'trieu', 'tr', 'm', 'k', 'million', 'under', 'max', 'above', 'over',
   ]);
   const keywords = normalizedMessage.split(/[^a-z0-9]+/)
     .filter((word) => word.length > 1 && !ignoredWords.has(word) && !/^\d/.test(word));
@@ -38,7 +57,13 @@ function findRecommendations(products, message) {
   const hasProductIntent = keywords.length > 0 || Boolean(requestedCategory);
 
   return products
-    .filter((product) => !budget || Number(product.price) <= budget)
+    .filter((product) => {
+      if (!budgetConstraint) return true;
+      const price = Number(product.price);
+      return budgetConstraint.direction === 'minimum'
+        ? price >= budgetConstraint.amount
+        : price <= budgetConstraint.amount;
+    })
     .map((product) => {
       const searchable = normalize(`${product.name} ${product.brand || ''} ${product.category_name}`);
       const score = keywords.reduce((total, word) => total + (searchable.includes(word) ? 1 : 0), 0);
@@ -47,7 +72,13 @@ function findRecommendations(products, message) {
       return { product, score: score + (categoryMatch ? 3 : 0) };
     })
     .filter(({ score }) => !hasProductIntent || score > 0)
-    .sort((left, right) => right.score - left.score || Number(left.product.price) - Number(right.product.price))
+    .sort((left, right) => {
+      if (right.score !== left.score) return right.score - left.score;
+      if (!budgetConstraint) return Number(left.product.price) - Number(right.product.price);
+      return budgetConstraint.direction === 'minimum'
+        ? Number(left.product.price) - Number(right.product.price)
+        : Number(right.product.price) - Number(left.product.price);
+    })
     .slice(0, 3)
     .map(({ product }) => product);
 }
