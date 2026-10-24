@@ -36,7 +36,7 @@ app.use(morgan('dev'));
 app.use(helmet({
   contentSecurityPolicy: {
     directives: {
-      'img-src': ["'self'", 'data:', 'https://cdn.tgdd.vn', 'https://cdnv2.tgdd.vn'],
+      'img-src': ["'self'", 'data:', 'https://cdn.tgdd.vn', 'https://cdnv2.tgdd.vn', 'https://cdn2.fptshop.com.vn'],
     },
   },
 }));

@@ -62,8 +62,14 @@ Bật MySQL trong XAMPP rồi chạy **một lần trên database mới/rỗng**
 npm run db:import:local
 ```
 
-Lệnh trên dùng `database/schema.local.sql`, tạo bảng và dữ liệu mẫu cùng admin local:
+Lệnh này dùng `database/schema.local.sql` để tạo bảng và dữ liệu mẫu gồm đúng 123 sản phẩm
+có ảnh. Nếu database local đang có bộ dữ liệu mẫu cũ, chạy
+`database/update-local-product-images.sql` trong phpMyAdmin để loại sản phẩm thiếu ảnh,
+bổ sung sản phẩm thay thế và đưa tổng số về 123. Sao lưu database trước khi chạy; không dùng
+script local trên production. Ảnh lấy từ CDN của Thế Giới Di Động và FPT Shop, cần internet
+khi mở trang local.
 
+Tài khoản Admin mặc định:
 | Email | Mật khẩu |
 |---|---|
 | `admin@electroshop.vn` | `ElectroShop@2026!` |
