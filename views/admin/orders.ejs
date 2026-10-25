@@ -1,4 +1,46 @@
 <%- include('../partials/header') %>
 <section class="page-heading"><p class="eyebrow">QUẢN TRỊ ĐƠN HÀNG</p><h1>Danh sách đơn hàng</h1></section>
-<div class="admin-table"><% if (!orders.length) { %><div class="empty-state"><h2>Chưa có đơn hàng</h2></div><% } %><% orders.forEach((order) => { %><div class="table-row order-row"><div><a href="/admin/orders/<%= order.id %>"><strong>#<%= order.id %> · <%= order.full_name %></strong></a><small><%= order.email %> · <%= new Date(order.created_at).toLocaleString('vi-VN') %> · <%= Number(order.total_amount).toLocaleString('vi-VN') %> đ</small></div><div class="order-actions"><% if (order.allowedTransitions.length) { %><form method="post" action="/admin/orders/<%= order.id %>/status"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><label class="visually-hidden" for="order-status-<%= order.id %>">Trạng thái mới</label><select id="order-status-<%= order.id %>" name="status"><option value="<%= order.status %>">Hiện tại: <%= { pending: 'Chờ duyệt', confirmed: 'Đã duyệt', shipping: 'Đang giao', completed: 'Hoàn tất', cancelled: 'Đã hủy' }[order.status] %></option><% order.allowedTransitions.filter((status) => status !== 'cancelled').forEach((status) => { %><option value="<%= status %>"><%= { confirmed: 'Đã duyệt', shipping: 'Đang giao', completed: 'Hoàn tất' }[status] %></option><% }) %></select><button class="btn" type="submit">Cập nhật</button></form><% } else { %><span class="muted">Trạng thái cuối</span><% } %><% if (order.status === 'pending') { %><form class="inline-form" method="post" action="/admin/bills/approve/<%= order.id %>" onsubmit="return confirm('Duyệt đơn hàng này?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="text-button" type="submit">Duyệt</button></form><% } %><% if (['pending', 'confirmed'].includes(order.status)) { %><form class="inline-form" method="post" action="/admin/bills/cancel/<%= order.id %>" onsubmit="return confirm('Hủy đơn hàng và hoàn kho?')"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="text-button" type="submit">Hủy</button></form><% } %></div></div><% }) %></div>
+<div class="admin-table">
+  <% if (!orders.length) { %><div class="empty-state"><h2>Chưa có đơn hàng</h2></div><% } %>
+  <% orders.forEach((order) => { %>
+    <div class="table-row order-row">
+      <div>
+        <div class="order-customer-heading">
+          <strong>#<%= order.id %> · <%= order.full_name %></strong>
+          <a class="btn order-detail-button" href="/admin/orders/<%= order.id %>">Xem chi tiết</a>
+        </div>
+        <small><%= order.email %> · <%= new Date(order.created_at).toLocaleString('vi-VN') %> · <%= Number(order.total_amount).toLocaleString('vi-VN') %> đ</small>
+      </div>
+      <div class="order-actions">
+        <% if (order.allowedTransitions.length) { %>
+          <form method="post" action="/admin/orders/<%= order.id %>/status">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <label class="visually-hidden" for="order-status-<%= order.id %>">Trạng thái mới</label>
+            <select id="order-status-<%= order.id %>" name="status">
+              <option value="<%= order.status %>">Hiện tại: <%= { pending: 'Chờ duyệt', confirmed: 'Đã duyệt', shipping: 'Đang giao', completed: 'Hoàn tất', cancelled: 'Đã hủy' }[order.status] %></option>
+              <% order.allowedTransitions.filter((status) => status !== 'cancelled').forEach((status) => { %>
+                <option value="<%= status %>"><%= { confirmed: 'Đã duyệt', shipping: 'Đang giao', completed: 'Hoàn tất' }[status] %></option>
+              <% }) %>
+            </select>
+            <button class="btn" type="submit">Cập nhật</button>
+          </form>
+        <% } else { %>
+          <span class="muted">Trạng thái cuối</span>
+        <% } %>
+        <% if (order.status === 'pending') { %>
+          <form class="inline-form" method="post" action="/admin/bills/approve/<%= order.id %>" onsubmit="return confirm('Duyệt đơn hàng này?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="text-button" type="submit">Duyệt</button>
+          </form>
+        <% } %>
+        <% if (['pending', 'confirmed'].includes(order.status)) { %>
+          <form class="inline-form" method="post" action="/admin/bills/cancel/<%= order.id %>" onsubmit="return confirm('Hủy đơn hàng và hoàn kho?')">
+            <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+            <button class="text-button" type="submit">Hủy</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  <% }) %>
+</div>
 <%- include('../partials/pagination') %><%- include('../partials/footer') %>

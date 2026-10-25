@@ -178,16 +178,43 @@ router.get('/', async (req, res, next) => {
 router.get('/products', async (req, res, next) => {
   try {
     const { page, limit } = getPage(req.query.page, 12);
-    const [[count]] = await pool.query('SELECT COUNT(*) AS total FROM products');
+    const search = typeof req.query.search === 'string' ? req.query.search.trim().slice(0, 100) : '';
+    const conditions = [];
+    const values = [];
+
+    if (search) {
+      conditions.push('(p.name LIKE ? OR p.brand LIKE ? OR c.name LIKE ?)');
+      values.push(`%${search}%`, `%${search}%`, `%${search}%`);
+    }
+    const whereClause = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const [[count]] = await pool.query(
+      `SELECT COUNT(*) AS total
+       FROM products p JOIN categories c ON c.id = p.category_id
+       ${whereClause}`,
+      values
+    );
     const total = Number(count.total);
     const totalPages = Math.max(1, Math.ceil(total / limit));
     const currentPage = Math.min(page, totalPages);
     const [products] = await pool.query(
       `SELECT p.*, c.name AS category_name
        FROM products p JOIN categories c ON c.id = p.category_id
-       ORDER BY p.is_active DESC, p.created_at DESC LIMIT ? OFFSET ?`, [limit, (currentPage - 1) * limit]
+       ${whereClause}
+       ORDER BY p.is_active DESC, p.created_at DESC LIMIT ? OFFSET ?`,
+      [...values, limit, (currentPage - 1) * limit]
     );
-     res.render('admin/products', { title: 'Quản lý sản phẩm', products, pagination: { currentPage, totalPages, total, path: '/admin/products', query: {} } });
+    res.render('admin/products', {
+      title: 'Quản lý sản phẩm',
+      products,
+      search,
+      pagination: {
+        currentPage,
+        totalPages,
+        total,
+        path: '/admin/products',
+        query: { search },
+      },
+    });
   } catch (err) { next(err); }
 });
 
@@ -619,12 +646,18 @@ router.get('/bills/details/:id', (req, res) => res.redirect(`/admin/orders/${req
 router.get('/orders/:id', async (req, res, next) => {
   try {
     const [[order]] = await pool.query(
-      `SELECT o.*, u.email FROM orders o JOIN users u ON u.id = o.user_id WHERE o.id = ?`,
+      `SELECT o.*, u.full_name AS customer_name, u.email AS customer_email,
+              u.phone AS customer_phone, u.address AS customer_address
+       FROM orders o JOIN users u ON u.id = o.user_id
+       WHERE o.id = ?`,
       [req.params.id]
     );
     if (!order) return res.status(404).render('404', { title: 'Không tìm thấy đơn hàng' });
     const [items] = await pool.query(
-      `SELECT oi.quantity, oi.unit_price, p.name FROM order_items oi JOIN products p ON p.id = oi.product_id WHERE oi.order_id = ?`,
+      `SELECT oi.product_id, oi.quantity, oi.unit_price, p.name, p.image_url
+       FROM order_items oi JOIN products p ON p.id = oi.product_id
+       WHERE oi.order_id = ?
+       ORDER BY oi.id`,
       [req.params.id]
     );
     res.render('admin/order-detail', { title: `Chi tiết đơn hàng #${order.id}`, order, items });

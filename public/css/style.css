@@ -58,6 +58,36 @@ body { font-family:'Roboto',sans-serif; }
 .profile-form .btn { margin:4px 0 0; }
 .profile-note { display:block; margin:-10px 0 16px; color:var(--muted); font-size:.72rem; }
 .profile-password { max-width:680px; margin-top:16px; }
+.admin-product-search { display:grid; gap:8px; margin:0 0 12px; }
+.admin-product-search > label { color:var(--muted); font-size:.8rem; font-weight:700; }
+.admin-product-search-controls { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.admin-product-search-controls input { width:min(100%, 420px); min-width:220px; height:42px; padding:0 12px; border:1px solid var(--line); border-radius:4px; background:#fff; font:inherit; }
+.admin-product-search-controls input:focus { outline:2px solid #b5282440; border-color:#b52824; }
+.admin-product-search-controls .btn { min-height:42px; }
+.admin-product-result-count { margin:0 0 12px; color:var(--muted); font-size:.85rem; }
+@media (max-width:480px) { .admin-product-search-controls { align-items:stretch; flex-direction:column; } .admin-product-search-controls input { width:100%; min-width:0; } .admin-product-search-controls .btn { align-self:flex-start; } }
+.admin-order-detail { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:18px; }
+.admin-order-card { min-width:0; padding:20px; }
+.admin-order-card h2 { margin:0; font-size:1.05rem; }
+.admin-order-card-heading { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:16px; }
+.admin-order-card-heading .order-status { flex-shrink:0; }
+.admin-order-info { display:grid; gap:14px; margin-top:16px; }
+.admin-order-info > div { min-width:0; }
+.admin-order-info dt { margin-bottom:4px; color:var(--muted); font-size:.75rem; }
+.admin-order-info dd { overflow-wrap:anywhere; font-size:.9rem; }
+.admin-order-products { grid-column:1 / -1; }
+.admin-order-products > .admin-table { margin-top:16px; }
+.admin-order-item { align-items:center; }
+.admin-order-item .admin-product { min-width:0; }
+.admin-order-item .admin-product > div { min-width:0; }
+.admin-order-item .admin-product strong { overflow-wrap:anywhere; }
+.admin-order-item-total { flex-shrink:0; text-align:right; }
+.admin-order-products .summary-total { justify-content:flex-end; align-items:center; gap:24px; margin-bottom:0; padding-top:16px; border-top:1px solid var(--line); }
+.admin-order-back { display:inline-block; margin-top:18px; }
+@media (max-width:700px) { .admin-order-detail { grid-template-columns:1fr; } .admin-order-products { grid-column:auto; } }
+@media (max-width:480px) { .admin-order-item { align-items:flex-start; } .admin-order-item .admin-product { align-items:flex-start; } .admin-order-item-total { white-space:nowrap; font-size:.85rem; } .admin-order-card { padding:16px; } }
+.order-customer-heading { display:flex; align-items:center; flex-wrap:wrap; gap:10px; }
+.order-detail-button { margin:0; padding:7px 11px; font-size:.75rem; }
 .profile-password > summary { width:max-content; list-style:none; cursor:pointer; }
 .profile-password > summary::-webkit-details-marker { display:none; }
 .profile-password[open] > summary { margin-bottom:16px; }
