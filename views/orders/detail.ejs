@@ -16,7 +16,7 @@
       <article class="table-row order-row">
         <div class="admin-product">
           <img src="<%= item.image_url || '/images/no-image.svg' %>" alt="<%= item.name %>">
-          <div><strong><%= item.name %></strong><small><%= Number(item.unit_price).toLocaleString('vi-VN') %> đ x <%= item.quantity %></small></div>
+          <div><strong><a href="/products/<%= item.product_id %>"><%= item.name %></a></strong><small><%= Number(item.unit_price).toLocaleString('vi-VN') %> đ x <%= item.quantity %></small></div>
         </div>
         <strong><%= (Number(item.unit_price) * item.quantity).toLocaleString('vi-VN') %> đ</strong>
       </article>

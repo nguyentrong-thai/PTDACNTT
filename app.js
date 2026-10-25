@@ -11,6 +11,7 @@ const csrf = require('csurf');
 const { rateLimit } = require('express-rate-limit');
 
 const { pool, testConnection } = require('./config/db');
+const productImageUpload = require('./middlewares/productImageUpload');
 const indexRoutes = require('./routes/index');
 const profileRoutes = require('./routes/profileRoutes');
 const CartModel = require('./models/cartModel');
@@ -64,6 +65,7 @@ app.use(session({
   },
 }));
 app.use(flash());
+app.use(productImageUpload);
 app.use(csrf());
 
 app.get('/healthz', (req, res) => res.status(200).send('ok'));

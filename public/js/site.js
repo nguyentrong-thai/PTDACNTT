@@ -20,6 +20,12 @@ document.querySelectorAll('form[method="post"], form[method="POST"]').forEach((f
   }
 });
 
+document.querySelectorAll('form[data-auto-submit]').forEach((form) => {
+  form.addEventListener('change', (event) => {
+    if (event.target instanceof HTMLSelectElement) form.requestSubmit();
+  });
+});
+
 document.querySelectorAll('[data-confirm-logout]').forEach((button) => {
   button.addEventListener('click', (event) => {
     if (!window.confirm('Bạn có chắc chắn muốn đăng xuất không?')) {

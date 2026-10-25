@@ -1,11 +1,11 @@
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
-const multer = require('multer');
 const sharp = require('sharp');
 const bcrypt = require('bcrypt');
 const { pool } = require('../config/db');
 const { requireStaff, requireAdmin } = require('../middlewares/authMiddleware');
+const productImageUpload = require('../middlewares/productImageUpload');
 const { isValidPassword } = require('../utils/passwordPolicy');
 const { getAllowedOrderTransitions, isAllowedOrderTransition } = require('../utils/orderStatus');
 const uploadDirectory = require('../config/uploadStorage');
@@ -17,26 +17,6 @@ router.use(['/users', '/staff', '/staffs', '/customers', '/categories'], require
 function getPage(value, limit) {
   const page = Math.max(1, Number.parseInt(value, 10) || 1);
   return { page, limit, offset: (page - 1) * limit };
-}
-
-const upload = multer({
-  storage: multer.memoryStorage(),
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter: (req, file, callback) => {
-    const extension = path.extname(file.originalname).toLowerCase();
-    if (['.jpg', '.jpeg', '.png', '.webp'].includes(extension) && ['image/jpeg', 'image/png', 'image/webp'].includes(file.mimetype)) return callback(null, true);
-    callback(new Error('Chỉ được upload file hình ảnh.'));
-  },
-});
-
-function handleImageUpload(req, res, next) {
-  upload.single('image')(req, res, (error) => {
-    if (!error) return next();
-    req.flash('error', error.code === 'LIMIT_FILE_SIZE'
-      ? 'Ảnh sản phẩm không được vượt quá 5 MB.'
-      : 'Chỉ chấp nhận ảnh JPG, PNG hoặc WebP.');
-    res.redirect(req.params.id ? `/admin/products/${req.params.id}/edit` : '/admin/products/new');
-  });
 }
 
 async function saveUploadedImage(file) {
@@ -444,7 +424,7 @@ router.get('/products/new', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/products', handleImageUpload, async (req, res, next) => {
+router.post('/products', async (req, res, next) => {
   try {
     const { name, category_id, brand, description, price, stock_qty, image_url } = req.body;
     const product = validateProductInput({ name, category_id, price, stock_qty });
@@ -472,7 +452,7 @@ router.get('/products/:id/edit', async (req, res, next) => {
   } catch (err) { next(err); }
 });
 
-router.post('/products/:id/update', handleImageUpload, async (req, res, next) => {
+router.post('/products/:id/update', async (req, res, next) => {
   try {
     const { name, category_id, brand, description, price, stock_qty, image_url } = req.body;
     const product = validateProductInput({ name, category_id, price, stock_qty });

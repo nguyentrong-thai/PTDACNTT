@@ -19,7 +19,7 @@
 					<button class="wishlist-button" type="submit"><i class="<%= isWishlisted ? 'fas' : 'far' %> fa-heart" aria-hidden="true"></i><%= isWishlisted ? 'Đã lưu yêu thích' : 'Thêm vào yêu thích' %></button>
 				</form>
 			<% } else { %>
-				<a class="wishlist-button" href="/auth/login">Đăng nhập để lưu yêu thích</a>
+				<a class="wishlist-button" href="/auth/login?returnTo=<%= encodeURIComponent('/products/' + product.id) %>">Đăng nhập để lưu yêu thích</a>
 			<% } %>
 			<a class="review-summary-link" href="#reviews"><strong><%= averageRating.toFixed(1) %>/5</strong> · <%= reviewCount %> đánh giá</a>
 		</div>

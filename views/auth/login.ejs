@@ -20,9 +20,9 @@
   </form>
   <div class="auth-secondary-links">
     <a href="/support">Cần trợ giúp đăng nhập?</a>
-    <a href="/auth/register">Tạo tài khoản</a>
+    <a href="/auth/register<%= returnTo ? '?returnTo=' + encodeURIComponent(returnTo) : '' %>">Tạo tài khoản</a>
   </div>
-  <p class="auth-switch">Bạn mới biết đến Group 12? <a href="/auth/register">Đăng ký</a></p>
+  <p class="auth-switch">Bạn mới biết đến Group 12? <a href="/auth/register<%= returnTo ? '?returnTo=' + encodeURIComponent(returnTo) : '' %>">Đăng ký</a></p>
 </section>
 
 <script src="/js/auth.js" defer></script>

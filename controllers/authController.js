@@ -2,14 +2,31 @@ const bcrypt = require('bcrypt');
 const UserModel = require('../models/userModel');
 const { isValidPassword } = require('../utils/passwordPolicy');
 
+function getLocalReturnPath(value) {
+  if (typeof value !== 'string' || !value.startsWith('/') || value.startsWith('//') || value.includes('\\') || /[\u0000-\u001f]/.test(value)) {
+    return null;
+  }
+
+  try {
+    const target = new URL(value, 'http://localhost');
+    return target.origin === 'http://localhost'
+      ? `${target.pathname}${target.search}${target.hash}`
+      : null;
+  } catch (err) {
+    return null;
+  }
+}
+
 const authController = {
   // ---------- Hiển thị form ----------
   showRegister(req, res) {
-    res.render('auth/register', { title: 'Đăng ký', authPage: true });
+    req.session.returnTo = getLocalReturnPath(req.query.returnTo) || req.session.returnTo;
+    res.render('auth/register', { title: 'Đăng ký', authPage: true, returnTo: getLocalReturnPath(req.session.returnTo) });
   },
 
   showLogin(req, res) {
-    res.render('auth/login', { title: 'Đăng nhập', authPage: true });
+    req.session.returnTo = getLocalReturnPath(req.query.returnTo) || req.session.returnTo;
+    res.render('auth/login', { title: 'Đăng nhập', authPage: true, returnTo: getLocalReturnPath(req.session.returnTo) });
   },
 
   // ---------- Xử lý đăng ký ----------
@@ -80,7 +97,7 @@ const authController = {
         return res.redirect('/auth/login');
       }
 
-      const returnTo = req.session.returnTo;
+      const returnTo = getLocalReturnPath(req.session.returnTo);
       const buyNow = req.session.buyNow;
       await new Promise((resolve, reject) => {
         req.session.regenerate((error) => error ? reject(error) : resolve());
@@ -102,6 +119,7 @@ const authController = {
       if (user.role === 'admin') {
         return res.redirect('/admin');
       }
+      if (returnTo) return res.redirect(returnTo);
       res.redirect('/');
     } catch (err) {
       next(err);
