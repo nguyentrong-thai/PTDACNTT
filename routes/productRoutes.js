@@ -7,7 +7,12 @@ const router = express.Router();
 
 router.get('/', async (req, res, next) => {
   try {
-    const filters = { search: (req.query.search || '').trim(), category: (req.query.category || '').trim(), brand: (req.query.brand || '').trim() };
+    const queryValue = (value) => typeof value === 'string' ? value.trim() : '';
+    const filters = {
+      search: queryValue(req.query.search),
+      category: queryValue(req.query.category),
+      brand: queryValue(req.query.brand),
+    };
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
     const limit = 12;
     const [productPage, categories, brands] = await Promise.all([ProductModel.findAll({ ...filters, page, limit }), ProductModel.getCategories(), ProductModel.getBrands()]);

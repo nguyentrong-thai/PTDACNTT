@@ -62,7 +62,7 @@
       <a href="/" class="logo" aria-label="Group 12 - Trang chủ">GROUP <strong>12</strong></a>
       <form class="market-search" method="get" action="/products" role="search">
         <label class="visually-hidden" for="site-search">Tìm sản phẩm</label>
-        <input id="site-search" type="search" name="search" placeholder="Nhập sản phẩm cần tìm">
+        <input id="site-search" type="search" name="search" value="<%= typeof filters !== 'undefined' ? filters.search : '' %>" placeholder="Nhập tên sản phẩm cần tìm" autocomplete="off">
         <button type="submit" aria-label="Tìm kiếm"><i class="fas fa-search" aria-hidden="true"></i><span class="visually-hidden">Tìm kiếm</span></button>
       </form>
       <a class="market-cart" href="/cart" aria-label="Giỏ hàng, <%= cartCount || 0 %> sản phẩm">
