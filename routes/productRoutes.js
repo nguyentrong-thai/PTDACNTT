@@ -5,6 +5,17 @@ const { requireLogin } = require('../middlewares/authMiddleware');
 
 const router = express.Router();
 
+router.get('/suggestions', async (req, res, next) => {
+  try {
+    const search = typeof req.query.search === 'string' ? req.query.search.trim() : '';
+    if (search.length < 2) return res.json([]);
+    if (search.length > 100) return res.status(400).json({ error: 'Từ khóa tìm kiếm quá dài.' });
+
+    const suggestions = await ProductModel.findSuggestions(search, 6);
+    res.json(suggestions);
+  } catch (err) { next(err); }
+});
+
 router.get('/', async (req, res, next) => {
   try {
     const queryValue = (value) => typeof value === 'string' ? value.trim() : '';
