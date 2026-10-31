@@ -4,14 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <meta name="csrf-token" content="<%= csrfToken %>">
-  <title><%= title %></title>
+  <title><%= title %><%= title.toLowerCase().includes('electroshop') ? '' : ' - ElectroShop' %></title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="<%= typeof authPage !== 'undefined' && authPage ? 'auth-page' : '' %> <%= typeof isAdminPage !== 'undefined' && isAdminPage ? 'admin-page' : '' %>">
   <% if (typeof isAdminPage !== 'undefined' && isAdminPage) { %>
     <aside class="admin-side-nav">
-      <a class="admin-side-brand" href="/admin">TRANG CHỦ</a>
+      <a class="admin-side-brand logo" href="/admin" aria-label="ElectroShop - Quản trị"><span class="logo-electro">ELECTRO</span><strong>SHOP</strong></a>
       <nav>
         <% if (currentUser.role !== 'admin') { %><a class="<%= currentPath.startsWith('/profile') ? 'is-active' : '' %>" href="/profile">Thông tin cá nhân</a><% } %>
         <% if (currentUser.role === 'admin') { %>
@@ -38,7 +38,7 @@
   <header class="site-header">
     <div class="market-topline">
       <div class="container market-topline-inner">
-        <span>Nhóm 12 · Thực tập cơ sở ngành</span>
+        <span>Công nghệ bứt tốc mỗi ngày</span>
         <div class="market-topline-links">
           <a class="market-topline-link" href="<%= currentUser ? '/orders' : '/auth/login' %>" aria-label="Thông báo đơn hàng">
             <i class="far fa-bell" aria-hidden="true"></i><span>Thông báo</span>
@@ -59,7 +59,7 @@
       </div>
     </div>
     <div class="container market-header-main">
-      <a href="/" class="logo" aria-label="Group 12 - Trang chủ">GROUP <strong>12</strong></a>
+      <a href="/" class="logo" aria-label="ElectroShop - Trang chủ"><span class="logo-electro">ELECTRO</span><strong>SHOP</strong></a>
       <form class="market-search" method="get" action="/products" role="search">
         <label class="visually-hidden" for="site-search">Tìm sản phẩm</label>
         <input id="site-search" type="search" name="search" value="<%= typeof filters !== 'undefined' ? filters.search : '' %>" placeholder="Nhập tên sản phẩm cần tìm" autocomplete="off" aria-autocomplete="list" aria-controls="site-search-suggestions" aria-expanded="false">

@@ -1,6 +1,7 @@
 <%- include('../partials/header') %>
 
 <section class="auth-panel auth-panel--register" aria-labelledby="register-heading">
+  <a class="logo auth-brand" href="/" aria-label="ElectroShop - Trang chủ"><span class="logo-electro">ELECTRO</span><strong>SHOP</strong></a>
   <h1 id="register-heading">Đăng ký</h1>
   <form action="/auth/register" method="POST" class="auth-fields">
     <input type="hidden" name="_csrf" value="<%= csrfToken %>">
@@ -34,7 +35,7 @@
 
     <button type="submit" class="auth-submit">Tiếp theo</button>
   </form>
-  <p class="auth-policy">Bằng việc đăng ký, bạn đồng ý với các điều khoản sử dụng dịch vụ của Group 12.</p>
+  <p class="auth-policy">Bằng việc đăng ký, bạn đồng ý với các điều khoản sử dụng dịch vụ của ElectroShop.</p>
   <p class="auth-switch">Bạn đã có tài khoản? <a href="/auth/login<%= returnTo ? '?returnTo=' + encodeURIComponent(returnTo) : '' %>">Đăng nhập</a></p>
 </section>
 

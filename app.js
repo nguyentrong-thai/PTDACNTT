@@ -26,6 +26,9 @@ if (!sessionSecret) {
 if (sessionSecret.length < 32) {
   throw new Error('SESSION_SECRET must contain at least 32 characters.');
 }
+if (process.env.NODE_ENV === 'production' && /^(?:replace-with-|your[-_ ]|change[-_ ]?me|example|placeholder)/i.test(sessionSecret)) {
+  throw new Error('SESSION_SECRET must be a unique random value, not a placeholder.');
+}
 
 // ---------- View engine ----------
 app.set('view engine', 'ejs');

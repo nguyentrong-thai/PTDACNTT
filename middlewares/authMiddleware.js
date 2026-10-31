@@ -1,3 +1,5 @@
+const UserModel = require('../models/userModel');
+
 // Yêu cầu đã đăng nhập
 function requireLogin(req, res, next) {
   if (!req.session.user) {
@@ -7,29 +9,57 @@ function requireLogin(req, res, next) {
   next();
 }
 
-function requireStaff(req, res, next) {
+function redirectAfterDestroyingSession(req, res, next) {
+  req.session.destroy((error) => {
+    if (error) return next(error);
+    res.clearCookie('connect.sid');
+    res.redirect('/auth/login');
+  });
+}
+
+async function requireStaff(req, res, next) {
   if (!req.session.user) {
     req.flash('error', 'Vui lòng đăng nhập để tiếp tục.');
     return res.redirect('/auth/login');
   }
-  if (!['admin', 'employee'].includes(req.session.user.role)) {
-    req.flash('error', 'Bạn không có quyền truy cập trang này.');
-    return res.redirect('/');
+
+  try {
+    const user = await UserModel.findById(req.session.user.id);
+    if (!user) return redirectAfterDestroyingSession(req, res, next);
+
+    req.currentUser = user;
+    req.session.user.role = user.role;
+    if (!['admin', 'employee'].includes(user.role)) {
+      req.flash('error', 'Bạn không có quyền truy cập trang này.');
+      return res.redirect('/');
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
 }
 
 // Yêu cầu quyền admin (phải dùng SAU requireLogin, hoặc tự kiểm tra session)
-function requireAdmin(req, res, next) {
+async function requireAdmin(req, res, next) {
   if (!req.session.user) {
     req.flash('error', 'Vui lòng đăng nhập để tiếp tục.');
     return res.redirect('/auth/login');
   }
-  if (req.session.user.role !== 'admin') {
-    req.flash('error', 'Bạn không có quyền truy cập trang này.');
-    return res.redirect('/');
+
+  try {
+    const user = req.currentUser || await UserModel.findById(req.session.user.id);
+    if (!user) return redirectAfterDestroyingSession(req, res, next);
+
+    req.currentUser = user;
+    req.session.user.role = user.role;
+    if (user.role !== 'admin') {
+      req.flash('error', 'Bạn không có quyền truy cập trang này.');
+      return res.redirect('/');
+    }
+    next();
+  } catch (error) {
+    next(error);
   }
-  next();
 }
 
 module.exports = { requireLogin, requireStaff, requireAdmin };
