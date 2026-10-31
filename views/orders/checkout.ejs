@@ -1,0 +1,27 @@
+<%- include('../partials/header') %>
+<section class="page-heading"><p class="eyebrow">HOÀN TẤT ĐƠN HÀNG</p><h1>Thông tin giao hàng</h1></section>
+<div class="checkout-layout">
+	<form class="admin-form" method="post" action="/orders">
+		<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+		<label>Tên người nhận<input name="recipient_name" value="<%= user.full_name || '' %>" maxlength="100" autocomplete="name" required></label>
+		<label>Địa chỉ nhận hàng<input name="shipping_address" value="<%= user.address || '' %>" maxlength="255" autocomplete="street-address" required></label>
+		<label>Số điện thoại<input type="tel" name="shipping_phone" value="<%= user.phone || '' %>" maxlength="20" pattern="[0-9+()\s-]{8,20}" autocomplete="tel" required></label>
+		<label>Ghi chú<textarea name="note" rows="3" maxlength="255"></textarea></label>
+		<p class="muted">Phương thức thanh toán: Thanh toán khi nhận hàng (COD)</p>
+		<button class="btn btn-primary" type="submit">Xác nhận đặt hàng</button>
+	</form>
+	<aside class="cart-summary">
+		<p class="eyebrow"><%= isBuyNow ? 'MUA NGAY' : 'TỔNG ĐƠN' %></p>
+		<% cart.forEach((item) => { %>
+			<p class="summary-line"><span><%= item.name %> x <%= item.quantity %></span><strong><%= (item.price * item.quantity).toLocaleString('vi-VN') %> đ</strong></p>
+		<% }) %>
+		<div class="summary-total"><span>Tổng cộng</span><strong><%= total.toLocaleString('vi-VN') %> đ</strong></div>
+	</aside>
+</div>
+<% if (isBuyNow) { %>
+	<form class="checkout-cancel" method="post" action="/orders/checkout/cancel-buy-now">
+		<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+		<button class="text-button" type="submit">Quay lại giỏ hàng</button>
+	</form>
+<% } %>
+<%- include('../partials/footer') %>

@@ -1,0 +1,41 @@
+<%- include('../partials/header') %>
+<section class="page-heading"><p class="eyebrow">QUẢN TRỊ SẢN PHẨM</p><h1>Kho sản phẩm</h1><p class="muted">Theo dõi tồn kho và cập nhật thông tin sản phẩm.</p></section>
+<div class="section-row"><h2>Danh sách sản phẩm</h2><a class="btn btn-primary" href="/admin/products/new">+ Thêm sản phẩm</a></div>
+<form class="admin-product-search" method="get" action="/admin/products" role="search">
+  <label for="admin-product-search">Tìm theo tên, hãng hoặc danh mục</label>
+  <div class="admin-product-search-controls">
+    <input id="admin-product-search" type="search" name="search" value="<%= search %>" maxlength="100" placeholder="Ví dụ: iPhone, Samsung, Điện thoại">
+    <button class="btn btn-primary" type="submit">Tìm kiếm</button>
+    <% if (search) { %><a class="cancel-link" href="/admin/products">Xóa tìm kiếm</a><% } %>
+  </div>
+</form>
+<% if (search) { %><p class="admin-product-result-count">Tìm thấy <strong><%= pagination.total %></strong> sản phẩm cho “<%= search %>”.</p><% } %>
+<div class="admin-table product-admin-table">
+  <% if (!products.length) { %>
+    <div class="empty-state">
+      <h2><%= search ? 'Không tìm thấy sản phẩm' : 'Chưa có sản phẩm' %></h2>
+      <% if (search) { %><p>Thử từ khóa khác hoặc xóa tìm kiếm để xem toàn bộ sản phẩm.</p><% } %>
+    </div>
+  <% } %>
+  <% products.forEach((product) => { %>
+    <div class="table-row">
+      <div class="admin-product">
+        <img src="<%= product.image_url || '/images/no-image.svg' %>" alt="<%= product.name %>">
+        <div>
+          <strong><%= product.name %></strong>
+          <small><%= product.category_name %> · Nhà sản xuất: <%= product.brand || 'Chưa cập nhật' %></small>
+          <small><%= Number(product.price).toLocaleString('vi-VN') %> đ · Tồn kho: <%= product.stock_qty %></small>
+        </div>
+      </div>
+      <div class="admin-product-actions">
+        <span class="order-status <%= product.is_active ? '' : 'status-cancelled' %>"><%= product.is_active ? 'Đang bán' : 'Đã ẩn' %></span>
+        <a class="text-button" href="/admin/products/<%= product.id %>/edit">Sửa</a>
+        <form class="inline-form" method="post" action="/admin/products/<%= product.id %>/delete" onsubmit="return confirm('Sản phẩm đã có trong đơn hàng sẽ không thể xóa. Tiếp tục?')">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button class="text-button" type="submit">Xóa</button>
+        </form>
+      </div>
+    </div>
+  <% }) %>
+</div>
+<%- include('../partials/pagination') %><%- include('../partials/footer') %>

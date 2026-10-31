@@ -1,0 +1,49 @@
+<%- include('../partials/header') %>
+
+<section class="page-heading">
+  <p class="eyebrow">TÀI KHOẢN</p>
+  <h1>Thông tin cá nhân</h1>
+  <p class="muted">Quản lý thông tin liên hệ để thanh toán nhanh hơn.</p>
+</section>
+
+<form class="profile-form" action="/profile" method="post">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <label>Họ và tên<input name="full_name" value="<%= user.full_name || '' %>" maxlength="100" autocomplete="name" required></label>
+  <label>Email<input type="email" name="email" value="<%= user.email %>" maxlength="150" autocomplete="email" required></label>
+  <div class="form-row">
+    <label>Số điện thoại<input type="tel" name="phone" value="<%= user.phone || '' %>" maxlength="20" pattern="[0-9+()\s-]{8,20}" autocomplete="tel" required></label>
+    <label>Giới tính<select name="gender"><option value="">Chưa chọn</option><option value="male" <%= user.gender === 'male' ? 'selected' : '' %>>Nam</option><option value="female" <%= user.gender === 'female' ? 'selected' : '' %>>Nữ</option><option value="other" <%= user.gender === 'other' ? 'selected' : '' %>>Khác</option></select></label>
+  </div>
+  <label>Ngày sinh<input type="date" name="date_of_birth" value="<%= user.date_of_birth ? new Date(user.date_of_birth).toISOString().slice(0, 10) : '' %>"></label>
+  <label>Địa chỉ<input name="address" value="<%= user.address || '' %>" maxlength="255" autocomplete="street-address"></label>
+  <button class="btn btn-primary" type="submit">Lưu thông tin</button>
+</form>
+
+<details class="profile-password">
+  <summary class="btn btn-primary">Đổi mật khẩu</summary>
+  <form class="profile-form" action="/profile/password" method="post">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label>Mật khẩu hiện tại
+      <span class="profile-password-input">
+        <input id="profile-current-password" type="password" name="current_password" autocomplete="current-password" required>
+        <button class="profile-password-toggle" type="button" data-password-toggle aria-label="Hiện mật khẩu" aria-controls="profile-current-password"><i class="far fa-eye" aria-hidden="true"></i></button>
+      </span>
+    </label>
+    <label>Mật khẩu mới
+      <span class="profile-password-input">
+        <input id="profile-new-password" type="password" name="new_password" minlength="8" autocomplete="new-password" required>
+        <button class="profile-password-toggle" type="button" data-password-toggle aria-label="Hiện mật khẩu" aria-controls="profile-new-password"><i class="far fa-eye" aria-hidden="true"></i></button>
+      </span>
+    </label>
+    <label>Xác nhận mật khẩu mới
+      <span class="profile-password-input">
+        <input id="profile-confirm-password" type="password" name="confirm_password" minlength="8" autocomplete="new-password" required>
+        <button class="profile-password-toggle" type="button" data-password-toggle aria-label="Hiện mật khẩu" aria-controls="profile-confirm-password"><i class="far fa-eye" aria-hidden="true"></i></button>
+      </span>
+    </label>
+    <button class="btn btn-primary" type="submit">Xác nhận đổi mật khẩu</button>
+  </form>
+</details>
+
+<script src="/js/auth.js" defer></script>
+<%- include('../partials/footer') %>

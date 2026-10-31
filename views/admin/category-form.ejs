@@ -1,0 +1,9 @@
+<%- include('../partials/header') %>
+<section class="page-heading"><p class="eyebrow">QUẢN TRỊ DANH MỤC</p><h1>Sửa danh mục</h1></section>
+<form class="admin-form compact-form" method="post" action="<%= formAction %>">
+  <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+  <div class="form-row"><label>Tên danh mục<input name="name" value="<%= category.name %>" required></label><label>Slug<input name="slug" value="<%= category.slug %>"><small class="form-help">Để trống để tự tạo từ tên danh mục.</small></label></div>
+  <label>Mô tả<input name="description" value="<%= category.description || '' %>"></label>
+  <button class="btn btn-primary" type="submit">Lưu thay đổi</button><a class="cancel-link" href="/admin/categories">Hủy</a>
+</form>
+<%- include('../partials/footer') %>

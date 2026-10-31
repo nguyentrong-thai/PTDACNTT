@@ -1,0 +1,69 @@
+<%- include('partials/header') %>
+
+<section class="store-hero" aria-labelledby="store-hero-heading">
+	<div class="store-hero-copy">
+		<p class="store-hero-eyebrow">ELECTROSHOP <span aria-hidden="true">/</span> CÔNG NGHỆ CHÍNH HÃNG</p>
+		<h1 id="store-hero-heading">Chọn công nghệ.<br><em>Bứt phá</em> mỗi ngày.</h1>
+		<p>Thiết bị công nghệ chọn lọc cho học tập, công việc và giải trí. Tìm đúng món bạn cần, đặt hàng dễ dàng.</p>
+		<a class="store-hero-cta" href="/products">Khám phá sản phẩm <i class="fas fa-arrow-right" aria-hidden="true"></i></a>
+		<div class="store-hero-benefits">
+			<span><i class="fas fa-check-circle" aria-hidden="true"></i> Sản phẩm chọn lọc</span>
+			<span><i class="fas fa-truck" aria-hidden="true"></i> Giao hàng tận tâm</span>
+		</div>
+	</div>
+	<div class="store-hero-art" aria-hidden="true">
+		<div class="store-hero-orbit store-hero-orbit--outer"></div>
+		<div class="store-hero-orbit store-hero-orbit--inner"></div>
+		<div class="store-hero-device"><i class="fas fa-laptop"></i><i class="fas fa-mobile-alt"></i></div>
+	</div>
+</section>
+
+<section class="market-categories" aria-labelledby="category-heading">
+	<div class="market-section-heading">
+		<h1 id="category-heading">Khám phá danh mục</h1>
+		<a href="/products">Xem tất cả <span aria-hidden="true">›</span></a>
+	</div>
+	<div class="market-category-grid">
+		<% categories.forEach((cat, index) => { %>
+			<a class="market-category-card" href="/products?category=<%= encodeURIComponent(cat.slug) %>">
+				<span class="market-category-number"><%= String(index + 1).padStart(2, '0') %></span>
+				<strong><%= cat.name %></strong>
+				<span class="market-category-description"><%= cat.description || 'Khám phá sản phẩm' %></span>
+			</a>
+		<% }); %>
+	</div>
+</section>
+
+<section class="market-featured" aria-labelledby="featured-heading">
+	<div class="market-section-heading market-featured-heading">
+		<h2 id="featured-heading">Gợi ý của hôm nay</h2>
+		<a href="/products">Xem tất cả <span aria-hidden="true">›</span></a>
+	</div>
+	<% if (products.length) { %>
+		<div class="market-product-grid">
+			<% products.forEach((product) => { %>
+				<article class="market-product-card">
+					<a class="market-product-image" href="/products/<%= product.id %>">
+						<img src="<%= product.image_url || '/images/no-image.svg' %>" alt="<%= product.name %>" loading="lazy">
+					</a>
+					<div class="market-product-copy">
+						<p class="market-product-brand"><%= product.brand || 'Thiết bị điện tử' %></p>
+						<h3><a href="/products/<%= product.id %>"><%= product.name %></a></h3>
+						<div class="market-product-bottom">
+							<strong><%= Number(product.price).toLocaleString('vi-VN') %><small>đ</small></strong>
+							<span class="market-product-stock <%= product.stock_qty > 0 ? '' : 'is-out' %>"><%= product.stock_qty > 0 ? 'Còn hàng' : 'Hết hàng' %></span>
+						</div>
+					</div>
+				</article>
+			<% }); %>
+		</div>
+	<% } else { %>
+		<div class="market-empty-state">
+			<h3>Chưa có sản phẩm để gợi ý</h3>
+			<p>Sản phẩm sẽ xuất hiện tại đây khi cửa hàng cập nhật kho hàng.</p>
+			<a href="/products">Khám phá cửa hàng</a>
+		</div>
+	<% } %>
+</section>
+
+<%- include('partials/footer') %>

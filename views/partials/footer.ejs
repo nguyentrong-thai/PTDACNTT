@@ -1,0 +1,30 @@
+  </main>
+
+  <footer class="site-footer market-footer">
+    <div class="container">
+      <div class="market-footer-about">
+        <a class="logo footer-logo" href="/" aria-label="ElectroShop - Trang chủ"><span class="logo-electro">ELECTRO</span><strong>SHOP</strong></a>
+        <p>Thiết bị công nghệ chọn lọc, giao hàng tận tâm. Mua sắm dễ dàng cùng ElectroShop.</p>
+      </div>
+      <div class="market-footer-links">
+        <strong>Mua sắm</strong>
+        <a href="/products">Tất cả sản phẩm</a>
+        <a href="/cart">Giỏ hàng</a>
+        <% if (currentUser) { %><a href="/wishlist">Sản phẩm yêu thích</a><% } %>
+      </div>
+      <div class="market-footer-links">
+        <strong>Tài khoản</strong>
+        <a href="/auth/login">Đăng nhập</a>
+        <a href="/orders">Đơn mua</a>
+        <a href="/support">Trung tâm hỗ trợ</a>
+      </div>
+      <p class="market-copyright">&copy; <%= new Date().getFullYear() %> ElectroShop. All rights reserved.</p>
+    </div>
+  </footer>
+  <% if (!(typeof authPage !== 'undefined' && authPage) && !(typeof isAdminPage !== 'undefined' && isAdminPage)) { %>
+    <%- include('assistant-widget') %>
+    <script src="/js/assistant.js" defer></script>
+  <% } %>
+  <script src="/js/site.js" defer></script>
+</body>
+</html>

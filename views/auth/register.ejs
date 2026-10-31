@@ -1,0 +1,43 @@
+<%- include('../partials/header') %>
+
+<section class="auth-panel auth-panel--register" aria-labelledby="register-heading">
+  <a class="logo auth-brand" href="/" aria-label="ElectroShop - Trang chủ"><span class="logo-electro">ELECTRO</span><strong>SHOP</strong></a>
+  <h1 id="register-heading">Đăng ký</h1>
+  <form action="/auth/register" method="POST" class="auth-fields">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="visually-hidden" for="register-name">Họ và tên</label>
+    <input class="auth-control" id="register-name" type="text" name="full_name" placeholder="Họ và tên" autocomplete="name" required>
+
+    <label class="visually-hidden" for="register-phone">Số điện thoại</label>
+    <input class="auth-control" id="register-phone" type="tel" name="phone" placeholder="Số điện thoại" autocomplete="tel" maxlength="20" pattern="[0-9+()\s-]{8,20}" required>
+
+    <label class="visually-hidden" for="register-email">Email</label>
+    <input class="auth-control" id="register-email" type="email" name="email" placeholder="Email" autocomplete="email" required>
+
+    <label class="visually-hidden" for="register-address">Địa chỉ</label>
+    <input class="auth-control" id="register-address" type="text" name="address" placeholder="Địa chỉ (không bắt buộc)" autocomplete="street-address">
+
+    <div class="auth-password-field">
+      <label class="visually-hidden" for="register-password">Mật khẩu</label>
+      <input class="auth-control" id="register-password" type="password" name="password" placeholder="Mật khẩu" autocomplete="new-password" required minlength="8">
+      <button class="auth-password-toggle" type="button" data-password-toggle aria-label="Hiện mật khẩu" aria-controls="register-password">
+        <i class="far fa-eye" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <div class="auth-password-field">
+      <label class="visually-hidden" for="register-confirm-password">Nhập lại mật khẩu</label>
+      <input class="auth-control" id="register-confirm-password" type="password" name="confirm_password" placeholder="Nhập lại mật khẩu" autocomplete="new-password" required minlength="8">
+      <button class="auth-password-toggle" type="button" data-password-toggle aria-label="Hiện mật khẩu" aria-controls="register-confirm-password">
+        <i class="far fa-eye" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <button type="submit" class="auth-submit">Tiếp theo</button>
+  </form>
+  <p class="auth-policy">Bằng việc đăng ký, bạn đồng ý với các điều khoản sử dụng dịch vụ của ElectroShop.</p>
+  <p class="auth-switch">Bạn đã có tài khoản? <a href="/auth/login<%= returnTo ? '?returnTo=' + encodeURIComponent(returnTo) : '' %>">Đăng nhập</a></p>
+</section>
+
+<script src="/js/auth.js" defer></script>
+<%- include('../partials/footer') %>

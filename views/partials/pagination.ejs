@@ -1,0 +1,8 @@
+<% if (pagination && pagination.totalPages > 1) { %>
+<nav class="pagination" aria-label="Phân trang">
+  <% const queryEntries = Object.entries(pagination.query || {}).filter(([, value]) => value); %>
+  <% for (let page = 1; page <= pagination.totalPages; page += 1) { %>
+    <a class="pagination-link <%= page === pagination.currentPage ? 'is-active' : '' %>" href="<%= pagination.path %>?<%= new URLSearchParams([...queryEntries, ['page', page]]).toString() %>" <%= page === pagination.currentPage ? 'aria-current="page"' : '' %>><%= page %></a>
+  <% } %>
+</nav>
+<% } %>

@@ -1,0 +1,30 @@
+<%- include('../partials/header') %>
+
+<section class="auth-panel auth-panel--login" aria-labelledby="login-heading">
+  <a class="logo auth-brand" href="/" aria-label="ElectroShop - Trang chủ"><span class="logo-electro">ELECTRO</span><strong>SHOP</strong></a>
+  <h1 id="login-heading">Đăng nhập</h1>
+  <form action="/auth/login" method="POST" class="auth-fields">
+    <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+    <label class="visually-hidden" for="login-email">Email</label>
+    <input class="auth-control" id="login-email" type="email" name="email" placeholder="Email" autocomplete="email" required>
+
+    <div class="auth-password-field">
+      <label class="visually-hidden" for="login-password">Mật khẩu</label>
+      <input class="auth-control" id="login-password" type="password" name="password" placeholder="Mật khẩu" autocomplete="current-password" required>
+      <button class="auth-password-toggle" type="button" data-password-toggle aria-label="Hiện mật khẩu" aria-controls="login-password">
+        <i class="far fa-eye" aria-hidden="true"></i>
+      </button>
+    </div>
+
+    <label class="auth-remember"><input type="checkbox" name="remember"> <span>Ghi nhớ đăng nhập</span></label>
+    <button type="submit" class="auth-submit">Đăng nhập</button>
+  </form>
+  <div class="auth-secondary-links">
+    <a href="/support">Cần trợ giúp đăng nhập?</a>
+    <a href="/auth/register<%= returnTo ? '?returnTo=' + encodeURIComponent(returnTo) : '' %>">Tạo tài khoản</a>
+  </div>
+  <p class="auth-switch">Bạn mới biết đến ElectroShop? <a href="/auth/register<%= returnTo ? '?returnTo=' + encodeURIComponent(returnTo) : '' %>">Đăng ký</a></p>
+</section>
+
+<script src="/js/auth.js" defer></script>
+<%- include('../partials/footer') %>

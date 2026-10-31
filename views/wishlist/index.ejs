@@ -1,0 +1,15 @@
+<%- include('../partials/header') %>
+<section class="page-heading"><p class="eyebrow">DANH SÁCH CỦA BẠN</p><h1>Sản phẩm yêu thích</h1><p class="muted"><%= products.length %> sản phẩm đã lưu</p></section>
+<% if (!products.length) { %>
+  <div class="empty-state"><h2>Danh sách đang trống</h2><p>Lưu sản phẩm bạn muốn xem lại sau.</p><a class="btn btn-primary" href="/products">Khám phá sản phẩm</a></div>
+<% } else { %>
+  <div class="product-grid wishlist-grid">
+    <% products.forEach((product) => { %>
+      <article class="product-card">
+        <a class="product-image" href="/products/<%= product.id %>"><img src="<%= product.image_url || '/images/no-image.svg' %>" alt="<%= product.name %>"></a>
+        <div class="product-copy"><p class="brand"><%= product.brand || 'Thiết bị điện tử' %></p><h3><a href="/products/<%= product.id %>"><%= product.name %></a></h3><div class="product-bottom"><strong class="price"><%= Number(product.price).toLocaleString('vi-VN') %> đ</strong><form method="post" action="/wishlist/<%= product.id %>/remove"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="wishlist-remove" type="submit" aria-label="Xóa <%= product.name %> khỏi yêu thích"><i class="fas fa-heart" aria-hidden="true"></i></button></form></div></div>
+      </article>
+    <% }) %>
+  </div>
+<% } %>
+<%- include('../partials/footer') %>

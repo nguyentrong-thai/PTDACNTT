@@ -1,0 +1,79 @@
+<%- include('../partials/header') %>
+
+<div class="breadcrumb"><a href="/products">Sản phẩm</a><span>/</span><span><%= product.category_name %></span></div>
+<section class="detail-layout">
+	<div class="detail-image">
+		<img src="<%= product.image_url || '/images/no-image.svg' %>" alt="<%= product.name %>">
+	</div>
+	<div class="detail-copy">
+		<p class="eyebrow">Nhà sản xuất: <%= product.brand || 'Chưa cập nhật' %> / <%= product.category_name %></p>
+		<h1><%= product.name %></h1>
+		<p class="detail-price"><%= Number(product.price).toLocaleString('vi-VN') %> đ</p>
+		<p class="detail-description"><%= product.description || 'Sản phẩm chính hãng, được kiểm tra kỹ trước khi giao đến bạn.' %></p>
+		<%- include('../partials/purchase-policies') %>
+		<p class="stock-line"><span class="status-dot"></span><%= product.stock_qty > 0 ? `Còn ${product.stock_qty} sản phẩm trong kho` : 'Tạm hết hàng' %></p>
+		<div class="product-extras">
+			<% if (currentUser) { %>
+				<form method="post" action="/wishlist/<%= product.id %>/<%= isWishlisted ? 'remove' : 'add' %>">
+					<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+					<button class="wishlist-button" type="submit"><i class="<%= isWishlisted ? 'fas' : 'far' %> fa-heart" aria-hidden="true"></i><%= isWishlisted ? 'Đã lưu yêu thích' : 'Thêm vào yêu thích' %></button>
+				</form>
+			<% } else { %>
+				<a class="wishlist-button" href="/auth/login?returnTo=<%= encodeURIComponent('/products/' + product.id) %>">Đăng nhập để lưu yêu thích</a>
+			<% } %>
+			<a class="review-summary-link" href="#reviews"><strong><%= averageRating.toFixed(1) %>/5</strong> · <%= reviewCount %> đánh giá</a>
+		</div>
+		<form class="add-form" method="post" action="/cart/add">
+			<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+			<input type="hidden" name="product_id" value="<%= product.id %>">
+			<div class="quantity-field">
+				<label for="product-quantity-<%= product.id %>">Số lượng</label>
+				<div class="quantity-control" data-quantity-control>
+					<button type="button" data-step="-1" aria-label="Giảm số lượng" <%= product.stock_qty < 1 ? 'disabled' : '' %>>-</button>
+					<input id="product-quantity-<%= product.id %>" type="number" name="quantity" value="1" min="1" max="<%= product.stock_qty %>" step="1" inputmode="numeric" required <%= product.stock_qty < 1 ? 'disabled' : '' %>>
+					<button type="button" data-step="1" aria-label="Tăng số lượng" <%= product.stock_qty < 1 ? 'disabled' : '' %>>+</button>
+				</div>
+			</div>
+			<div class="product-actions">
+				<button class="btn btn-primary" type="submit" name="intent" value="cart" <%= product.stock_qty < 1 ? 'disabled' : '' %>>
+					<i class="fas fa-cart-plus" aria-hidden="true"></i> Thêm vào giỏ
+				</button>
+				<button class="btn btn-buy-now" type="submit" name="intent" value="buy_now" <%= product.stock_qty < 1 ? 'disabled' : '' %>>
+					<i class="fas fa-bolt" aria-hidden="true"></i> Mua ngay
+				</button>
+			</div>
+		</form>
+	</div>
+</section>
+
+<section class="reviews-section" id="reviews">
+	<div class="reviews-heading">
+		<div><p class="eyebrow">TRẢI NGHIỆM KHÁCH HÀNG</p><h2>Đánh giá sản phẩm</h2></div>
+		<p><strong><%= averageRating.toFixed(1) %></strong> / 5 · <%= reviewCount %> đánh giá</p>
+	</div>
+	<% if (currentUser && canReview) { %>
+		<form class="review-form" method="post" action="/products/<%= product.id %>/reviews">
+			<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+			<label>Đánh giá của bạn<select name="rating" required><% for (let rating = 5; rating >= 1; rating -= 1) { %><option value="<%= rating %>" <%= currentReview && currentReview.rating === rating ? 'selected' : '' %>><%= rating %> / 5</option><% } %></select></label>
+			<label>Bình luận<textarea name="comment" rows="3" maxlength="2000" placeholder="Chia sẻ trải nghiệm sử dụng"><%= currentReview ? currentReview.comment || '' : '' %></textarea></label>
+			<button class="btn btn-primary" type="submit"><%= currentReview ? 'Cập nhật đánh giá' : 'Gửi đánh giá' %></button>
+		</form>
+	<% } else if (currentUser) { %>
+		<p class="review-note">Bạn có thể đánh giá sau khi đơn hàng của sản phẩm được cập nhật là hoàn tất.</p>
+	<% } else { %>
+		<p class="review-note"><a href="/auth/login">Đăng nhập</a> và hoàn tất mua hàng để gửi đánh giá.</p>
+	<% } %>
+	<div class="review-list">
+		<% if (!reviews.length) { %><p class="review-note">Chưa có đánh giá cho sản phẩm này.</p><% } %>
+		<% reviews.forEach((review) => { %>
+			<article class="review-item">
+				<div class="review-item-heading"><strong><%= review.full_name %></strong><span><%= review.rating %> / 5</span></div>
+				<p><%= review.comment || 'Khách hàng chưa để lại bình luận.' %></p>
+				<time datetime="<%= new Date(review.created_at).toISOString() %>"><%= new Date(review.created_at).toLocaleDateString('vi-VN') %></time>
+			</article>
+		<% }) %>
+	</div>
+</section>
+
+<script src="/js/quantity-control.js" defer></script>
+<%- include('../partials/footer') %>

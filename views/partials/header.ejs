@@ -1,0 +1,95 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="<%= csrfToken %>">
+  <title><%= title %><%= title.toLowerCase().includes('electroshop') ? '' : ' - ElectroShop' %></title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" integrity="sha512-iBBXm8fW90+nuLcSKlbmrPcLa0OT92xO1BIsZ+ywDWZCvqsWgccV3gFoRBv0z+8dLJgyAHIhR35VZc2oM/gI1w==" crossorigin="anonymous" referrerpolicy="no-referrer">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="<%= typeof authPage !== 'undefined' && authPage ? 'auth-page' : '' %> <%= typeof isAdminPage !== 'undefined' && isAdminPage ? 'admin-page' : '' %>">
+  <% if (typeof isAdminPage !== 'undefined' && isAdminPage) { %>
+    <aside class="admin-side-nav">
+      <a class="admin-side-brand logo" href="/admin" aria-label="ElectroShop - Quản trị"><span class="logo-electro">ELECTRO</span><strong>SHOP</strong></a>
+      <nav>
+        <% if (currentUser.role !== 'admin') { %><a class="<%= currentPath.startsWith('/profile') ? 'is-active' : '' %>" href="/profile">Thông tin cá nhân</a><% } %>
+        <% if (currentUser.role === 'admin') { %>
+          <a class="<%= currentPath.startsWith('/admin/users') ? 'is-active' : '' %>" href="/admin/users">Quản lý nhân viên</a>
+          <a class="<%= currentPath.startsWith('/admin/customers') ? 'is-active' : '' %>" href="/admin/customers">Quản lý khách hàng</a>
+        <% } %>
+        <a class="<%= currentPath.startsWith('/admin/products') ? 'is-active' : '' %>" href="/admin/products">Quản lý sản phẩm</a>
+        <% if (currentUser.role === 'admin') { %><a class="<%= currentPath.startsWith('/admin/categories') ? 'is-active' : '' %>" href="/admin/categories">Quản lý thể loại</a><% } %>
+        <a class="<%= currentPath.startsWith('/admin/orders') || currentPath.startsWith('/admin/bills') ? 'is-active' : '' %>" href="/admin/orders">Quản lý hóa đơn</a>
+      </nav>
+    </aside>
+    <div class="admin-topbar">
+      <details class="admin-account-menu">
+        <summary class="admin-topbar-user">
+          <%= currentUser.role === 'admin' ? 'Quản trị viên' : 'Nhân viên' %>
+        </summary>
+        <form class="admin-topbar-logout" method="post" action="/auth/logout">
+          <input type="hidden" name="_csrf" value="<%= csrfToken %>">
+          <button type="submit" data-confirm-logout>Đăng xuất</button>
+        </form>
+      </details>
+    </div>
+  <% } %>
+  <header class="site-header">
+    <div class="market-topline">
+      <div class="container market-topline-inner">
+        <span>Công nghệ bứt tốc mỗi ngày</span>
+        <div class="market-topline-links">
+          <a class="market-topline-link" href="<%= currentUser ? '/orders' : '/auth/login' %>" aria-label="Thông báo đơn hàng">
+            <i class="far fa-bell" aria-hidden="true"></i><span>Thông báo</span>
+          </a>
+          <a class="market-topline-link" href="/support">
+            <i class="far fa-question-circle" aria-hidden="true"></i><span>Hỗ trợ</span>
+          </a>
+          <% if (currentUser) { %>
+            <% if (['admin', 'employee'].includes(currentUser.role)) { %><a href="/admin">Quản trị</a><% } %>
+            <a href="/profile">Tài khoản</a>
+            <span>Xin chào, <%= currentUser.full_name %></span>
+            <form class="inline-form" method="post" action="/auth/logout"><input type="hidden" name="_csrf" value="<%= csrfToken %>"><button class="text-button" type="submit" data-confirm-logout>Đăng xuất</button></form>
+          <% } else { %>
+            <a href="/auth/login">Đăng nhập</a>
+            <a href="/auth/register">Đăng ký</a>
+          <% } %>
+        </div>
+      </div>
+    </div>
+    <div class="container market-header-main">
+      <a href="/" class="logo" aria-label="ElectroShop - Trang chủ"><span class="logo-electro">ELECTRO</span><strong>SHOP</strong></a>
+      <form class="market-search" method="get" action="/products" role="search">
+        <label class="visually-hidden" for="site-search">Tìm sản phẩm</label>
+        <input id="site-search" type="search" name="search" value="<%= typeof filters !== 'undefined' ? filters.search : '' %>" placeholder="Nhập tên sản phẩm cần tìm" autocomplete="off" aria-autocomplete="list" aria-controls="site-search-suggestions" aria-expanded="false">
+        <button type="submit" aria-label="Tìm kiếm"><i class="fas fa-search" aria-hidden="true"></i><span class="visually-hidden">Tìm kiếm</span></button>
+        <div class="market-search-dropdown" id="site-search-dropdown" hidden>
+          <ul class="market-search-suggestions" id="site-search-suggestions" role="listbox" aria-label="Gợi ý sản phẩm"></ul>
+          <p class="market-search-status" id="site-search-status" role="status" aria-live="polite" hidden></p>
+          <a class="market-search-all" id="site-search-all" href="/products" hidden>Xem tất cả kết quả</a>
+        </div>
+      </form>
+      <a class="market-cart" href="/cart" aria-label="Giỏ hàng, <%= cartCount || 0 %> sản phẩm">
+        <i class="fas fa-shopping-cart market-cart-icon" aria-hidden="true"></i>
+        <span>Giỏ hàng</span>
+        <b class="cart-count"><%= cartCount || 0 %></b>
+      </a>
+    </div>
+    <nav class="market-nav">
+      <div class="container market-nav-inner">
+        <a href="/">Trang chủ</a>
+        <a href="/products">Tất cả sản phẩm</a>
+        <% if (currentUser) { %><a href="/orders">Đơn mua</a><% } %>
+        <% if (currentUser) { %><a href="/wishlist">Yêu thích</a><% } %>
+      </div>
+    </nav>
+  </header>
+
+  <main class="container <%= typeof marketHome !== 'undefined' && marketHome ? 'market-home' : '' %> <%= typeof authPage !== 'undefined' && authPage ? 'auth-shell' : '' %>">
+    <% if (success && success.length) { %>
+      <div class="alert alert-success"><%= success[0] %></div>
+    <% } %>
+    <% if (error && error.length) { %>
+      <div class="alert alert-error"><%= error[0] %></div>
+    <% } %>

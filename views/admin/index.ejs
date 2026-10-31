@@ -1,0 +1,6 @@
+<%- include('../partials/header') %>
+<section class="page-heading"><p class="eyebrow">KHU VỰC QUẢN TRỊ</p><h1>Dashboard ElectroShop</h1><p class="muted">Xin chào, <%= currentUser.full_name %>.</p></section>
+<div class="admin-actions"><a class="btn" href="/admin/products">Quản lý sản phẩm</a><a class="btn" href="/admin/categories">Quản lý danh mục</a><a class="btn" href="/admin/orders">Quản lý đơn hàng</a><a class="btn" href="/admin/users">Quản lý nhân viên</a><a class="btn" href="/admin/customers">Quản lý khách hàng</a></div>
+<div class="admin-stats"><article><span>Sản phẩm đang bán</span><strong><%= stats.products %></strong></article><article><span>Tổng đơn hàng</span><strong><%= stats.orders %></strong></article><article><span>Tài khoản</span><strong><%= stats.users %></strong></article></div>
+<section class="admin-panel"><div class="section-row"><h2>Quản lý nhanh</h2><a href="/products">Xem cửa hàng ↗</a></div><p class="muted">Bạn có thể thêm, sửa, ẩn sản phẩm và cập nhật trạng thái đơn hàng từ các mục trên.</p></section>
+<%- include('../partials/footer') %>

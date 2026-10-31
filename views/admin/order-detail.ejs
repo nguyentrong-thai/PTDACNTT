@@ -1,0 +1,53 @@
+<%- include('../partials/header') %>
+<section class="page-heading">
+  <p class="eyebrow">QUẢN LÝ ĐƠN HÀNG</p>
+  <h1>Chi tiết đơn hàng #<%= order.id %></h1>
+  <p class="muted">Đặt lúc <%= new Date(order.created_at).toLocaleString('vi-VN') %></p>
+</section>
+<div class="admin-order-detail">
+  <section class="admin-panel admin-order-card">
+    <div class="admin-order-card-heading">
+      <h2>Thông tin khách hàng</h2>
+      <span class="order-status status-<%= order.status %>"><%= { pending: 'Chờ duyệt', confirmed: 'Đã duyệt', shipping: 'Đang giao', completed: 'Hoàn tất', cancelled: 'Đã hủy' }[order.status] %></span>
+    </div>
+    <dl class="admin-order-info">
+      <div><dt>Họ và tên</dt><dd><%= order.customer_name %></dd></div>
+      <div><dt>Email</dt><dd><%= order.customer_email %></dd></div>
+      <div><dt>Số điện thoại tài khoản</dt><dd><%= order.customer_phone || 'Chưa cập nhật' %></dd></div>
+      <div><dt>Địa chỉ trong hồ sơ</dt><dd><%= order.customer_address || 'Chưa cập nhật' %></dd></div>
+    </dl>
+  </section>
+
+  <section class="admin-panel admin-order-card">
+    <h2>Thông tin nhận hàng</h2>
+    <dl class="admin-order-info">
+      <div><dt>Người nhận</dt><dd><%= order.recipient_name %></dd></div>
+      <div><dt>Số điện thoại nhận hàng</dt><dd><%= order.shipping_phone %></dd></div>
+      <div><dt>Địa chỉ giao hàng</dt><dd><%= order.shipping_address %></dd></div>
+      <div><dt>Ghi chú đơn hàng</dt><dd><%= order.note || 'Không có' %></dd></div>
+    </dl>
+  </section>
+
+  <section class="admin-panel admin-order-card admin-order-products">
+    <h2>Sản phẩm trong đơn</h2>
+    <div class="admin-table">
+      <% if (!items.length) { %><div class="empty-state"><p>Đơn hàng chưa có sản phẩm.</p></div><% } %>
+      <% items.forEach((item) => { %>
+        <article class="table-row admin-order-item">
+          <div class="admin-product">
+            <img src="<%= item.image_url || '/images/no-image.svg' %>" alt="<%= item.name %>">
+            <div>
+              <strong><%= item.name %></strong>
+              <small>Mã sản phẩm: #<%= item.product_id %></small>
+              <small><%= Number(item.unit_price).toLocaleString('vi-VN') %> đ × <%= item.quantity %></small>
+            </div>
+          </div>
+          <strong class="admin-order-item-total"><%= (Number(item.unit_price) * item.quantity).toLocaleString('vi-VN') %> đ</strong>
+        </article>
+      <% }) %>
+    </div>
+    <div class="summary-total"><span>Tổng tiền đơn hàng</span><strong><%= Number(order.total_amount).toLocaleString('vi-VN') %> đ</strong></div>
+  </section>
+</div>
+<a class="cancel-link admin-order-back" href="/admin/orders">← Quay lại danh sách đơn hàng</a>
+<%- include('../partials/footer') %>

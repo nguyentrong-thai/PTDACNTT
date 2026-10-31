@@ -1,0 +1,60 @@
+<%- include('../partials/header') %>
+
+<section class="page-heading">
+	<p class="eyebrow">GIỎ HÀNG CỦA BẠN</p>
+	<h1>Sẵn sàng để đặt hàng?</h1>
+</section>
+
+<% if (!cart.length) { %>
+	<div class="empty-state">
+		<h2>Giỏ hàng đang trống</h2>
+		<p>Thêm một thiết bị bạn thích, rồi quay lại đây.</p>
+		<a class="btn btn-primary" href="/products">Khám phá sản phẩm</a>
+	</div>
+<% } else { %>
+	<div class="cart-layout">
+		<div class="cart-items">
+			<% cart.forEach((item) => { %>
+				<article class="cart-item">
+					<img src="<%= item.image_url || '/images/no-image.svg' %>" alt="<%= item.name %>">
+					<div>
+						<h2><a href="/products/<%= item.id %>"><%= item.name %></a></h2>
+						<p><%= item.price.toLocaleString('vi-VN') %> đ / sản phẩm</p>
+						<% if (!item.is_active || item.stock_qty < 1) { %>
+							<p class="form-help">Sản phẩm không còn khả dụng. Hãy xóa sản phẩm khỏi giỏ.</p>
+						<% } else { %>
+							<% if (item.quantity > item.stock_qty) { %><p class="form-help">Chỉ còn <%= item.stock_qty %> sản phẩm trong kho.</p><% } %>
+						<form class="quantity-form" method="post" action="/cart/update/<%= item.id %>">
+							<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+								<div class="quantity-field">
+									<label for="cart-quantity-<%= item.id %>">Số lượng</label>
+									<div class="quantity-control" data-quantity-control>
+										<button type="button" data-step="-1" aria-label="Giảm số lượng" <%= item.quantity <= 1 ? 'disabled' : '' %>>-</button>
+										<input id="cart-quantity-<%= item.id %>" type="number" name="quantity" value="<%= item.quantity %>" min="1" max="<%= item.stock_qty %>" step="1" inputmode="numeric" required>
+										<button type="button" data-step="1" aria-label="Tăng số lượng" <%= item.quantity >= item.stock_qty ? 'disabled' : '' %>>+</button>
+									</div>
+								</div>
+							<button class="text-button" type="submit">Cập nhật</button>
+						</form>
+						<% } %>
+					</div>
+					<strong><%= (item.quantity * item.price).toLocaleString('vi-VN') %> đ</strong>
+					<form method="post" action="/cart/remove/<%= item.id %>">
+						<input type="hidden" name="_csrf" value="<%= csrfToken %>">
+						<button class="text-button" type="submit">Xóa</button>
+					</form>
+				</article>
+			<% }) %>
+		</div>
+		<aside class="cart-summary">
+			<p class="eyebrow">TẠM TÍNH</p>
+			<div class="summary-total"><span>Tổng cộng</span><strong><%= total.toLocaleString('vi-VN') %> đ</strong></div>
+			<a class="btn btn-primary btn-wide" href="/orders/checkout">Tiến hành thanh toán</a>
+			<small>Kiểm tra thông tin giao hàng trước khi xác nhận đơn.</small>
+			<%- include('../partials/purchase-policies') %>
+		</aside>
+	</div>
+<% } %>
+
+<script src="/js/quantity-control.js" defer></script>
+<%- include('../partials/footer') %>
